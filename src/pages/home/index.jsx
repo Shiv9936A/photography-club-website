@@ -5,7 +5,7 @@ import ClubUpdates from "./clubUpdates"
 import photo1 from '../../assets/images/placeholder-images/photography1.png'
 import photo2 from '../../assets/images/placeholder-images/photography2.png'
 import {useEffect,useState} from "react";
-import axios from "axios";
+import { authClient } from '../../components/util/authClient';
 
 export default function HomePage() {
 
@@ -26,7 +26,7 @@ export default function HomePage() {
     
     const getEvents = async () => {
         try {
-            const res = await axios.get("http://localhost:1337/api/events");
+            const res = await authClient.get("/gallery/events");
             setEvents(res.data.data);
         }
         catch(err) {

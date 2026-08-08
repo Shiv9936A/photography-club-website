@@ -39,6 +39,12 @@
       "target": "api::category.category",
       "inversedBy": "posts"
     },
+    "event": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::event.event",
+      "inversedBy": "posts"
+    },
     "user": {
       "type": "relation",
       "relation": "manyToOne",
@@ -57,6 +63,14 @@
         "videos",
         "audios"
       ]
+    },
+    "visibility": {
+      "type": "enumeration",
+      "enum": [
+        "public",
+        "private"
+      ],
+      "default": "private"
     },
     "location": {
       "type": "string"

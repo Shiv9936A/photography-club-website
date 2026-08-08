@@ -86,6 +86,26 @@
       "type": "string",
       "default": "Unknown Photographer"
     },
+    "googleId": {
+      "type": "string",
+      "unique": true
+    },
+    "picture": {
+      "type": "string"
+    },
+    "appRole": {
+      "type": "enumeration",
+      "enum": [
+        "user",
+        "member",
+        "admin"
+      ],
+      "default": "user"
+    },
+    "isNitk": {
+      "type": "boolean",
+      "default": false
+    },
     "photographerRole": {
       "type": "string"
     },

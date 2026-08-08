@@ -1,4 +1,5 @@
 import axios from "axios";
+import { authClient } from "./authClient";
 import { API_URL } from "./api";
 
 const mapPost = (post) => {
@@ -32,12 +33,12 @@ const mapPost = (post) => {
 };
 
 export const getPhotos = async () => {
-    const res = await axios.get(`${API_URL}/api/posts/photos`);
+    const res = await authClient.get("/gallery/photos");
     return res.data.data.map(mapPost);
 };
 
 export const getReels = async () => {
-    const res = await axios.get(`${API_URL}/api/posts/reels`);
+    const res = await authClient.get("/gallery/reels");
     return res.data.data.map(mapPost);
 };
 

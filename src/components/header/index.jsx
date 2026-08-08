@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useTheme } from "../../context/ThemeContext"
 import Button from "../Button"
 import { navigateSmooth } from "../../utils/helperFunctions"
+import AuthMenu from "../auth/AuthMenu"
 
 const navigationLinks = [
     {
@@ -65,7 +66,7 @@ export default function Header() {
                     />
                 </Link>
                 <div className="hidden md:flex items-center justify-center gap-8 text-sm tracking-wide">
-                    {navigationLinks.slice(0, -1).map((link) => (
+                    {navigationLinks.map((link) => (
                         link.isButton ? (
                             <Link key={link.path} to={link.path} onClick={() => navigateSmooth(navigate, link.path, 'header')}>
                                 <Button variant={link.variant} size="sm" icon={link.icon}>
@@ -88,9 +89,7 @@ export default function Header() {
                     <AiOutlineMenu size={20} />
                 </div>
                 <div className="hidden md:block">
-                    <Button variant="secondary" size="sm" icon={<FaRegUser />}>
-                        Club Member
-                    </Button>
+                    <AuthMenu />
                 </div>
             </header>
 
@@ -127,6 +126,9 @@ export default function Header() {
                                 {[2, 3].includes(index) && <hr className="border-gray-100" />}
                             </div>
                         ))}
+                    </div>
+                    <div className="mt-auto pt-8">
+                        <AuthMenu mobile mobileOpen={nav} />
                     </div>
                 </div>
             </div>

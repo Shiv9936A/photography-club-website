@@ -1,5 +1,21 @@
 import { getGoogleClient } from "../config/google.js";
 import { generateToken } from "../utils/jwt.js"
+import { getUserById, resolveOrCreateUser } from "../services/strapi.service.js";
+
+const toPublicUser = (user) => {
+    if (!user) {
+        return null;
+    }
+
+    return {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        picture: user.picture ?? null,
+        role: user.role,
+        isNitk: Boolean(user.isNitk),
+    };
+};
 
 export const googleLogin = async (req, res) => {
 
@@ -36,25 +52,25 @@ export const googleLogin = async (req, res) => {
             });
         }
 
-        const isNitk = email.endsWith("@nitk.edu.in");
+        const user = await resolveOrCreateUser({
+            googleId: sub,
+            name,
+            email,
+            picture,
+        });
 
         const jwt = generateToken({
-            googleId: sub,
-            email,
-            role: "user",
+            userId: user.id,
+            email: user.email,
+            role: user.role,
+            isNitk: user.isNitk,
         });
 
         return res.status(200).json({
             success: true,
             message: "Login Successful",
             token: jwt,
-            user: {
-                googleId: sub,
-                name,
-                email,
-                picture,
-                isNitk,
-            },
+            user: toPublicUser(user),
         });
     }
     catch (err) {
@@ -68,10 +84,22 @@ export const googleLogin = async (req, res) => {
 };
 
 export const getCurrentUser = async (req, res) => {
+    const user = req.currentUser ?? await getUserById(req.user.userId);
+
     res.json({
         success: true,
-        user: req.user,
+        user: toPublicUser(user) ?? req.user,
         message: "Current User API",
+    });
+};
+
+export const getProfile = async (req, res) => {
+    const user = req.currentUser ?? await getUserById(req.user.userId);
+
+    res.json({
+        success: true,
+        profile: toPublicUser(user) ?? req.user,
+        message: "Profile API",
     });
 };
 

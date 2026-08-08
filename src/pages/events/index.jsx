@@ -4,7 +4,7 @@ import Dropdown from '../../components/filtersort/dropdown';
 import EventsThumb from '../../components/events/eventsThumb';
 import ModularTabs from '../../components/modularTabs';
 import { useEffect } from 'react';
-import axios from 'axios';
+import { authClient } from '../../components/util/authClient';
 
 function Events() {
     const { id } = useParams();
@@ -12,11 +12,9 @@ function Events() {
     const [eventsToShow, setEventsToShow] = useState([]);
     const [events, setEvents] = useState([]);
 
-    const API="http://localhost:1337/api/events";
-
     const getEvents = async () =>{
         try{
-            const res=await axios.get(API);
+            const res = await authClient.get('/gallery/events');
 
         console.log(res.data.data);
         const events=[...res.data.data].sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));

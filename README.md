@@ -40,6 +40,8 @@ VITE_GOOGLE_CLIENT_ID=your-google-oauth-client-id
 PORT=5000
 GOOGLE_CLIENT_ID=your-google-oauth-client-id
 JWT_SECRET=your-jwt-secret
+STRAPI_URL=http://localhost:1337
+AUTH_SYNC_SECRET=your-shared-internal-secret
 ```
 
 - `backend/.env`
@@ -74,7 +76,6 @@ npm run dev
 
 - Frontend: http://localhost:5173
 - Strapi Admin: http://localhost:1337/admin
-- Auth Test: http://localhost:5173/auth-test
 
 ---
 
@@ -104,7 +105,7 @@ photo_features/
 | ----------- | ---- | --------------------------------- |
 | Frontend    | 5173 | React UI (Vite dev server)        |
 | Strapi      | 1337 | Content API & Admin Panel         |
-| Auth Server | 5000 | Google OAuth & JWT authentication |
+| Auth Server | 5000 | Google OAuth verification, Strapi-backed roles, JWT issuance |
 
 ## Prerequisites
 
@@ -121,6 +122,7 @@ ID before deploying.
 
 ```env
 VITE_GOOGLE_CLIENT_ID=your-google-oauth-client-id
+VITE_AUTH_API_URL=http://localhost:5000/api
 ```
 
 ### `node-server/`
@@ -129,6 +131,8 @@ VITE_GOOGLE_CLIENT_ID=your-google-oauth-client-id
 PORT=5000
 GOOGLE_CLIENT_ID=your-google-oauth-client-id   # must match frontend client ID
 JWT_SECRET=your-jwt-secret
+STRAPI_URL=http://localhost:1337
+AUTH_SYNC_SECRET=your-shared-internal-secret
 ```
 
 ### `backend/` (Strapi)
@@ -145,6 +149,8 @@ vars in `backend/.env`.
 2.  Add authorized JavaScript origins: `http://localhost:5173`
 3.  Copy the client ID into both root `.env` (`VITE_GOOGLE_CLIENT_ID`)
     and `node-server/.env` (`GOOGLE_CLIENT_ID`).
+4.  Set the same `AUTH_SYNC_SECRET` in `node-server/.env` and
+    `backend/.env`.
 
 ## Scripts (frontend)
 
@@ -160,10 +166,36 @@ Command Description
 1.  User clicks Google Sign-In on the frontend (`@react-oauth/google`).
 2.  Frontend sends the Google ID token to
     `POST http://localhost:5000/api/auth/google`.
-3.  Auth server verifies the token, checks `@nitk.edu.in` email, and
-    returns a JWT.
-4.  Protected routes use `Authorization: Bearer <token>` with
-    `GET /api/auth/me`.
+3.  Auth server verifies the token, asks Strapi to resolve or create the
+    user record, and returns a JWT with trusted claims only.
+4.  The frontend stores that JWT, restores it on reload with
+    `GET /api/auth/profile`, and keeps auth state in context.
+5.  Protected requests use `Authorization: Bearer <token>`.
+
+## Profile
+
+- `GET /api/auth/profile` returns `name`, `email`, `picture`, `role`, and
+  `isNitk`.
+- Editable profile fields stay in Strapi user records, which already have
+  `bio`, `avatar`, `name`, `instagram`, and `photographerRole`.
+
+## Auth model
+
+- Google OAuth is only used to verify identity.
+- Strapi is the source of truth for the app role.
+- JWTs carry only trusted claims: `userId`, `email`, `role`, and `isNitk`.
+- Roles are limited to `user`, `member`, and `admin`.
+- `member` and `admin` are never inferred from Google sign-in alone.
+
+## Gallery Access
+
+- Gallery posts now have a `visibility` field with `public` and `private`.
+- Posts can also be linked to an `event` so access can be partially public
+  per event.
+- The frontend gallery feed now goes through the auth server, which returns
+  public posts to everyone and private posts only to allowed users.
+- For each event, set the best 5 to 10 images to `public` and keep the rest
+  `private`.
 
 ## Notes
 

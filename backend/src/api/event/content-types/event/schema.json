@@ -33,6 +33,12 @@
     "isPClubEvent": {
       "type": "boolean",
       "default": false
+    },
+    "posts": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::post.post",
+      "mappedBy": "event"
     }
   }
 }

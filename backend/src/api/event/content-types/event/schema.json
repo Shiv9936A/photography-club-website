@@ -33,6 +33,12 @@
     "isPClubEvent": {
       "type": "boolean",
       "default": false
+    },
+    "photos": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::photo.photo",
+      "mappedBy": "event"
     }
   }
 }

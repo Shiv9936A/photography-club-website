@@ -1,41 +1,64 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
-import Photos from '../../components/photoReels/Photos';
-import Reels from '../../components/photoReels/Reels';
-import Tab from '../../components/photoReels/Tab';
+import Photos from "../../components/photoReels/Photos";
+import Reels from "../../components/photoReels/Reels";
+import PrivateGallery from "../../components/photoReels/PrivateGallery";
+import Tab from "../../components/photoReels/Tab";
 
 const PhotoReels = () => {
-  const [activeTab, setActiveTab] = useState('Photos'); // Default to Photos tab
+  const [activeTab, setActiveTab] = useState("Photos");
+  const token = localStorage.getItem("authToken");
+  let user = null;
 
-  // Function to render tab content based on active tab
+  try {
+    if (token) {
+      user = JSON.parse(atob(token.split(".")[1]));
+    }
+  } catch (error) {
+    console.error("Invalid token:", error);
+  }
+
+  const isNitk = user?.isNitk === true;
+
   const renderTabContent = () => {
-    if (activeTab === 'Photos') {
+    if (activeTab === "Photos") {
       return <Photos />;
     }
-    return <Reels />;
+
+    if (activeTab === "Reels") {
+      return <Reels />;
+    }
+
+    if (activeTab === "Private" && isNitk) {
+      return <PrivateGallery />;
+    }
+
+    return <Photos />;
   };
 
   return (
     <>
       {/* Header Section */}
-      <div className="mt-11 flex flex-col justify-center items-center gap-y-4 px-4 sm:px-6 lg:px-8">
-        <span className="text-center font-bold text-3xl border-[1.2px] border-black rounded-full px-8 py-3 w-auto sm:text-4xl lg:text-5xl">
-          Photography Feed
-        </span>
-        <span className="text-md opacity-60 sm:text-lg lg:text-xl lg:max-w-2xl text-center">
+
+      <section className="text-center py-12">
+        <h1 className="text-5xl font-medium">Photography Feed</h1>
+
+        <p className="text-gray-500 mt-4 text-lg">
           Explore amazing shots and stories from our talented photographers
-        </span>
-      </div>
+        </p>
+      </section>
 
-      {/* Tabs Section */}
+      {/* Tabs */}
       <div className="mt-11">
-        <Tab activeTab={activeTab} setActiveTab={setActiveTab} />
+        <Tab
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          isNitk={isNitk}
+        />
       </div>
 
-      {/* Content Section */}
-      <div>
-        {renderTabContent()}
-      </div>
+      {/* Content */}
+      <div>{renderTabContent()}</div>
     </>
   );
 };

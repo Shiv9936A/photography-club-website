@@ -78,14 +78,32 @@
     "avatar": {
       "type": "media",
       "multiple": false,
-      "allowedTypes": [
-        "images"
-      ]
+      "allowedTypes": ["images"]
     },
     "name": {
       "type": "string",
       "default": "Unknown Photographer"
     },
+    "googleId": {
+      "type": "string",
+      "unique": true
+    },
+    "googlePicture": {
+      "type": "string"
+    },
+    "isNitk": {
+  "type": "boolean",
+  "default": false
+},
+"appRole": {
+  "type": "enumeration",
+  "enum": [
+    "user",
+    "club-member",
+    "admin"
+  ],
+  "default": "user"
+},
     "photographerRole": {
       "type": "string"
     },

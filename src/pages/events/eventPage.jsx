@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 import { useLocation } from 'react-router';
 import { useNavigate } from 'react-router-dom';
 import MarkdownPreview from '@uiw/react-markdown-preview';
@@ -10,19 +11,45 @@ import { formatDateTime, getDifference } from '../../utils/dateHelpers';
 import { navigateSmooth } from '../../utils/helperFunctions';
 import { saveAs } from "file-saver";
 
-const eventImages = [
-    { src: "/photo-1.jpg", name: "event1.jpg" },
-    { src: "/photo-1.jpg", name: "event2.jpg" },
-    { src: "/photo-1.jpg", name: "event3.jpg" },
-    { src: "/photo-1.jpg", name: "event4.jpg" },
-    { src: "/photo-1.jpg", name: "event5.jpg" }
+// const eventImages = [
+//     { src: "/photo-1.jpg", name: "event1.jpg" },
+//     { src: "/photo-1.jpg", name: "event2.jpg" },
+//     { src: "/photo-1.jpg", name: "event3.jpg" },
+//     { src: "/photo-1.jpg", name: "event4.jpg" },
+//     { src: "/photo-1.jpg", name: "event5.jpg" }
 
-];
+// ];
 
 function EventPage() {
     const navigate = useNavigate();
     const location = useLocation();
     const [selectedImage, setSelectedImage] = useState(null);
+    const [eventImages, setEventImages] = useState([]);
+
+    useEffect(() => {
+    const fetchGallery = async () => {
+        try {
+            const res = await axios.get(
+                "http://localhost:1337/api/gallery/public"
+            );
+
+            const photos = res.data.photos || [];
+
+            const formattedPhotos = photos.map((photo) => ({
+                src: photo.image?.url
+                    ? `http://localhost:1337${photo.image.url}`
+                    : "",
+                name: photo.image?.name || photo.title || "event-photo.jpg",
+            }));
+
+            setEventImages(formattedPhotos);
+        } catch (error) {
+            console.error("Failed to load event gallery:", error);
+        }
+    };
+
+    fetchGallery();
+}, []);
 
     // Determine if user came from home page
     const isFromHome = location.state?.from === 'home';

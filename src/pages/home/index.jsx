@@ -1,183 +1,245 @@
-import Landing from "./landing"
-import About from "./about"
-import Hero from "./hero"
-import ClubUpdates from "./clubUpdates"
-import photo1 from '../../assets/images/placeholder-images/photography1.png'
-import photo2 from '../../assets/images/placeholder-images/photography2.png'
-import {useEffect,useState} from "react";
+import Landing from "./landing";
+import About from "./about";
+import Hero from "./hero";
+import ClubUpdates from "./clubUpdates";
+import photo1 from "../../assets/images/placeholder-images/photography1.png";
+import photo2 from "../../assets/images/placeholder-images/photography2.png";
+import { useEffect, useState } from "react";
 import axios from "axios";
 
 export default function HomePage() {
+  const [events, setEvents] = useState([]);
+  const [photos, setPhotos] = useState([]);
 
-    const [events, setEvents] = useState([]);
+  const getPhotos = async () => {
+    try {
+      const res = await axios.get(
+        "http://localhost:1337/api/photos?populate=image",
+      );
 
-    const specialNotices = ["Recruitment for 2028 batch has begun."]
-    const onJoin = (e) => {
-        e.preventDefault();
-        console.log("Join button clicked");
-        // redirect to the most recent recruitment blog post
+      const formattedPhotos = res.data.data.map((photo) => ({
+        id: photo.id,
+        image: photo.image?.url
+          ? `http://localhost:1337${photo.image.url}`
+          : null,
+        title: photo.title || "Untitled Photo",
+        location: "NITK",
+        date: photo.createdAt,
+        photographer: "PClub",
+        link: "#",
+      }));
+
+      console.log("FORMATTED PHOTOS:", formattedPhotos);
+
+      setPhotos(formattedPhotos);
+    } catch (error) {
+      console.error("Failed to fetch photos:", error);
     }
+  };
 
-    const learnMore = (e) => {
-        e.preventDefault();
-        console.log("Learn more button clicked");
-        // redirect to the learn more page
+  const specialNotices = ["Recruitment for 2028 batch has begun."];
+  const onJoin = (e) => {
+    e.preventDefault();
+    console.log("Join button clicked");
+    // redirect to the most recent recruitment blog post
+  };
+
+  const learnMore = (e) => {
+    e.preventDefault();
+    console.log("Learn more button clicked");
+    // redirect to the learn more page
+  };
+
+  const getEvents = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+
+      // Events are protected
+      if (!token) {
+        console.log("No authentication token. Events are protected.");
+        setEvents([]);
+        return;
+      }
+
+      const res = await axios.get("http://localhost:1337/api/events", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      console.log("Events response:", res.data);
+
+      setEvents(res.data.data);
+    } catch (err) {
+      console.error(
+        "Failed to fetch events:",
+        err.response?.data || err.message,
+      );
+
+      setEvents([]);
     }
-    
-    const getEvents = async () => {
-        try {
-            const res = await axios.get("http://localhost:1337/api/events");
-            setEvents(res.data.data);
-        }
-        catch(err) {
-            console.log(err);
-        }  
-    }
+  };
 
-    useEffect(()=>{
-        getEvents();
-    },[])
+  useEffect(() => {
+    const getPhotos = async () => {
+      try {
+        const res = await axios.get(
+          "http://localhost:1337/api/photos?populate=image",
+        );
 
-    return (
-        <div>
-            <Landing onJoin={onJoin} specialNotices={specialNotices} />
-            {/* Refer to tailwind.config.js for container, container-px and container-px-md variables */}
-            <div className="max-w-container px-container-px py-5 mx-auto flex flex-col md:py-7 md:px-container-px-md">
-                <About clubGallery={clubGallery} stats={stats} learnMore={learnMore} />
-                <Hero photos={topPhotos} />
-                <hr className="my-10 border-1 border-gray-300" />
-                <ClubUpdates events={events} blogs={blogs} />
-                <hr className="my-10 border-1 border-gray-300" />
-            </div>
-        </div >
+        console.log("PHOTOS FROM STRAPI:", res.data.data);
 
-    )
+        setPhotos(res.data.data);
+      } catch (error) {
+        console.error("Failed to fetch photos:", error);
+      }
+    };
+
+    getPhotos();
+  }, []);
+
+  useEffect(() => {
+    getEvents();
+  }, []);
+
+  return (
+    <div>
+      <Landing onJoin={onJoin} specialNotices={specialNotices} />
+      {/* Refer to tailwind.config.js for container, container-px and container-px-md variables */}
+      <div className="max-w-container px-container-px py-5 mx-auto flex flex-col md:py-7 md:px-container-px-md">
+        <About clubGallery={clubGallery} stats={stats} learnMore={learnMore} />
+        <Hero photos={photos} />
+        <hr className="my-10 border-1 border-gray-300" />
+        <ClubUpdates events={events} blogs={blogs} />
+        <hr className="my-10 border-1 border-gray-300" />
+      </div>
+    </div>
+  );
 }
 
 const clubGallery = [
-    {
-        image: "https://placehold.co/600x700",
-        caption: "Image 1",
-        date: "2024-01-01",
-        itemsInPhoto: ["Person 1", "Person 2", "Person 3"]
-    },
-    {
-        image: "https://placehold.co/600x500",
-        caption: "Image 2",
-        date: "2024-01-01",
-        itemsInPhoto: ["Person 1", "Person 2", "Person 3"]
-    },
-    {
-        image: "https://placehold.co/500x800",
-        caption: "Image 3",
-        date: "2024-01-01",
-        itemsInPhoto: ["Person 1", "Person 2", "Person 3"]
-    },
-    {
-        image: "https://placehold.co/1280x800",
-        caption: "Image 4",
-        date: "2024-01-01",
-        itemsInPhoto: ["Person 1", "Person 2", "Person 3"]
-    },
-    {
-        image: "https://placehold.co/600x600",
-        caption: "Image 5",
-        date: "2024-01-01",
-        itemsInPhoto: ["Person 1", "Person 2", "Person 3"]
-    },
-    {
-        image: "https://placehold.co/720x1280",
-        caption: "Image 6",
-        date: "2024-01-01",
-        itemsInPhoto: ["Person 1", "Person 2", "Person 3"]
-    },
-    {
-        image: "https://placehold.co/600x400",
-        caption: "Image 7",
-        date: "2024-01-01",
-        itemsInPhoto: ["Person 1", "Person 2", "Person 3"]
-    },
-    {
-        image: "https://placehold.co/400x400",
-        caption: "Image 8",
-        date: "2024-01-01",
-        itemsInPhoto: ["Person 1", "Person 2", "Person 3"]
-    },
-    {
-        image: "https://placehold.co/900x600",
-        caption: "Image 9",
-        date: "2024-01-01",
-        itemsInPhoto: ["Person 1", "Person 2", "Person 3"]
-    },
-
-]
+  {
+    image: "https://placehold.co/600x700",
+    caption: "Image 1",
+    date: "2024-01-01",
+    itemsInPhoto: ["Person 1", "Person 2", "Person 3"],
+  },
+  {
+    image: "https://placehold.co/600x500",
+    caption: "Image 2",
+    date: "2024-01-01",
+    itemsInPhoto: ["Person 1", "Person 2", "Person 3"],
+  },
+  {
+    image: "https://placehold.co/500x800",
+    caption: "Image 3",
+    date: "2024-01-01",
+    itemsInPhoto: ["Person 1", "Person 2", "Person 3"],
+  },
+  {
+    image: "https://placehold.co/1280x800",
+    caption: "Image 4",
+    date: "2024-01-01",
+    itemsInPhoto: ["Person 1", "Person 2", "Person 3"],
+  },
+  {
+    image: "https://placehold.co/600x600",
+    caption: "Image 5",
+    date: "2024-01-01",
+    itemsInPhoto: ["Person 1", "Person 2", "Person 3"],
+  },
+  {
+    image: "https://placehold.co/720x1280",
+    caption: "Image 6",
+    date: "2024-01-01",
+    itemsInPhoto: ["Person 1", "Person 2", "Person 3"],
+  },
+  {
+    image: "https://placehold.co/600x400",
+    caption: "Image 7",
+    date: "2024-01-01",
+    itemsInPhoto: ["Person 1", "Person 2", "Person 3"],
+  },
+  {
+    image: "https://placehold.co/400x400",
+    caption: "Image 8",
+    date: "2024-01-01",
+    itemsInPhoto: ["Person 1", "Person 2", "Person 3"],
+  },
+  {
+    image: "https://placehold.co/900x600",
+    caption: "Image 9",
+    date: "2024-01-01",
+    itemsInPhoto: ["Person 1", "Person 2", "Person 3"],
+  },
+];
 
 const topPhotos = [
-    {
-        id: 1,
-        image: photo1,
-        title: "Beautiful Hills.",
-        location: "Hills",
-        date: "2024-01-01",
-        photographer: "ABCD",
-        link: "Link",
-    },
-    {
-        id: 2,
-        image: photo2,
-        title: "Mountain View",
-        location: "Mountain",
-        date: "2024-01-01",
-        photographer: "EFGH",
-        link: "Link",
-    },
-    {
-        id: 3,
-        image: "https://placehold.co/1920x1080",
-        title: "Beautiful Hills.",
-        location: "Hills",
-        date: "2024-01-01",
-        photographer: "EFGH",
-        link: "Link",
-    },
-    {
-        id: 4,
-        image: "https://placehold.co/1920x900",
-        title: "Mountain View",
-        location: "Mountain",
-        date: "2024-01-01",
-        photographer: "EFGH",
-        link: "Link",
-    },
-    {
-        id: 5,
-        image: "https://placehold.co/1920x1200",
-        title: "Mountain View",
-        location: "Mountain",
-        date: "2024-01-01",
-        photographer: "EFGH",
-        link: "Link",
-    },
-]
+  {
+    id: 1,
+    image: photo1,
+    title: "Beautiful Hills.",
+    location: "Hills",
+    date: "2024-01-01",
+    photographer: "ABCD",
+    link: "Link",
+  },
+  {
+    id: 2,
+    image: photo2,
+    title: "Mountain View",
+    location: "Mountain",
+    date: "2024-01-01",
+    photographer: "EFGH",
+    link: "Link",
+  },
+  {
+    id: 3,
+    image: "https://placehold.co/1920x1080",
+    title: "Beautiful Hills.",
+    location: "Hills",
+    date: "2024-01-01",
+    photographer: "EFGH",
+    link: "Link",
+  },
+  {
+    id: 4,
+    image: "https://placehold.co/1920x900",
+    title: "Mountain View",
+    location: "Mountain",
+    date: "2024-01-01",
+    photographer: "EFGH",
+    link: "Link",
+  },
+  {
+    id: 5,
+    image: "https://placehold.co/1920x1200",
+    title: "Mountain View",
+    location: "Mountain",
+    date: "2024-01-01",
+    photographer: "EFGH",
+    link: "Link",
+  },
+];
 
 const stats = [
-    {
-        title: "Sony World Photography Winners.",
-        value: 12
-    },
-    {
-        title: "Taylor Wessing Potrait Prizes",
-        value: 3
-    },
-    {
-        title: "Events hosted in the last year.",
-        value: 10
-    },
-    {
-        title: "Club Members",
-        value: 74
-    },
-]
+  {
+    title: "Sony World Photography Winners.",
+    value: 12,
+  },
+  {
+    title: "Taylor Wessing Potrait Prizes",
+    value: 3,
+  },
+  {
+    title: "Events hosted in the last year.",
+    value: 10,
+  },
+  {
+    title: "Club Members",
+    value: 74,
+  },
+];
 
 // Latest few events
 // Everything is necessary except image
@@ -224,34 +286,34 @@ const stats = [
 // Top few blogs
 // Everything is necessary except image
 const blogs = [
-    {
-        id: "blog-1",
-        title: "Title 1",
-        description: "Short Description or first few lines of the blog",
-        image: "https://placehold.co/380x150",
-    },
-    {
-        id: "blog-2",
-        title: "Title 2",
-        description: "Short Description or first few lines of the blog",
-        image: "https://placehold.co/380x150",
-    },
-    {
-        id: "blog-3",
-        title: "Title 3",
-        description: "Short Description or first few lines of the blog",
-        image: "https://placehold.co/380x150",
-    },
-    {
-        id: "blog-4",
-        title: "Title 4",
-        description: "Short Description or first few lines of the blog",
-        image: "https://placehold.co/380x150",
-    },
-    {
-        id: "blog-5",
-        title: "Title 5 - No Image",
-        description: "Short Description or first few lines of the blog",
-        image: null,
-    }
-]
+  {
+    id: "blog-1",
+    title: "Title 1",
+    description: "Short Description or first few lines of the blog",
+    image: "https://placehold.co/380x150",
+  },
+  {
+    id: "blog-2",
+    title: "Title 2",
+    description: "Short Description or first few lines of the blog",
+    image: "https://placehold.co/380x150",
+  },
+  {
+    id: "blog-3",
+    title: "Title 3",
+    description: "Short Description or first few lines of the blog",
+    image: "https://placehold.co/380x150",
+  },
+  {
+    id: "blog-4",
+    title: "Title 4",
+    description: "Short Description or first few lines of the blog",
+    image: "https://placehold.co/380x150",
+  },
+  {
+    id: "blog-5",
+    title: "Title 5 - No Image",
+    description: "Short Description or first few lines of the blog",
+    image: null,
+  },
+];

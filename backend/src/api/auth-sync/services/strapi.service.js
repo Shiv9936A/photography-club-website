@@ -4,14 +4,11 @@ const STRAPI_URL =
   process.env.STRAPI_URL || "http://localhost:1337";
 
 /**
- * Sync Google user with Strapi
- *
  * @param {{
  *   googleId: string,
  *   email: string,
  *   name?: string,
- *   picture?: string,
- *   isNitk: boolean
+ *   picture?: string
  * }} user
  */
 export const syncGoogleUser = async ({
@@ -19,7 +16,6 @@ export const syncGoogleUser = async ({
   email,
   name,
   picture,
-  isNitk,
 }) => {
   try {
     const response = await axios.post(
@@ -29,7 +25,6 @@ export const syncGoogleUser = async ({
         email,
         name,
         picture,
-        isNitk,
       },
       {
         headers: {

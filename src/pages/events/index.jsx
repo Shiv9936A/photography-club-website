@@ -1,101 +1,116 @@
-import { Outlet, useParams } from 'react-router';
-import { useState } from 'react';
-import Dropdown from '../../components/filtersort/dropdown';
-import EventsThumb from '../../components/events/eventsThumb';
-import ModularTabs from '../../components/modularTabs';
-import { useEffect } from 'react';
-import axios from 'axios';
+import { Outlet, useParams } from "react-router";
+import { useState } from "react";
+import Dropdown from "../../components/filtersort/dropdown";
+import EventsThumb from "../../components/events/eventsThumb";
+import ModularTabs from "../../components/modularTabs";
+import { useEffect } from "react";
+import axios from "axios";
 
 function Events() {
-    const { id } = useParams();
-    const [activeTab, setActiveTab] = useState('upcoming');
-    const [eventsToShow, setEventsToShow] = useState([]);
-    const [events, setEvents] = useState([]);
+  const { id } = useParams();
+  const [activeTab, setActiveTab] = useState("upcoming");
+  const [eventsToShow, setEventsToShow] = useState([]);
+  const [events, setEvents] = useState([]);
 
-    const API="http://localhost:1337/api/events";
+  const API = "http://localhost:1337/api/events";
 
-    const getEvents = async () =>{
-        try{
-            const res=await axios.get(API);
+  const getEvents = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
 
-        console.log(res.data.data);
-        const events=[...res.data.data].sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
-        setEvents(events);
-        }
-        catch(err){
-            console.log(err);
-        }
+      if (!token) {
+        console.log("No authentication token. Events are protected.");
+        return;
+      }
+
+      const res = await axios.get(API, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      console.log("EVENTS FROM STRAPI:", res.data.data);
+
+      const events = [...res.data.data].sort(
+        (a, b) => new Date(b.dateTime) - new Date(a.dateTime),
+      );
+
+      setEvents(events);
+    } catch (err) {
+      console.log("Events API error:", err.response?.data || err);
     }
-    useEffect(() => {
-        getEvents();
-        
-    }, []);
+  };
+  useEffect(() => {
+    getEvents();
+  }, []);
 
+  const handleTabClick = (tabId) => {
+    setActiveTab(tabId);
 
-    const handleTabClick =  (tabId) => {
-         setActiveTab(tabId);
-
-        if (tabId === "all") {
-             setEventsToShow(events);
-        } else if (tabId === "upcoming") {
-            const upcomingEvents = events.filter(event => new Date(event.dateTime) >= new Date());
-            const sortedUpcomingEvents = [...upcomingEvents].sort((a,b) => new Date(a.dateTime) - new Date(b.dateTime));
-            setEventsToShow(sortedUpcomingEvents);
-        } else if (tabId === "pclub") {
-            const pastEvents = events.filter(event => event.isPClubEvent);
-             setEventsToShow(pastEvents);
-        }
-        else if (tabId === "nitkevents") {
-            const nitkEvents = events.filter(event => !event.isPClubEvent);
-            setEventsToShow(nitkEvents);
-        }
+    if (tabId === "all") {
+      setEventsToShow(events);
+    } else if (tabId === "upcoming") {
+      const upcomingEvents = events.filter(
+        (event) => new Date(event.dateTime) >= new Date(),
+      );
+      const sortedUpcomingEvents = [...upcomingEvents].sort(
+        (a, b) => new Date(a.dateTime) - new Date(b.dateTime),
+      );
+      setEventsToShow(sortedUpcomingEvents);
+    } else if (tabId === "pclub") {
+      const pastEvents = events.filter((event) => event.isPClubEvent);
+      setEventsToShow(pastEvents);
+    } else if (tabId === "nitkevents") {
+      const nitkEvents = events.filter((event) => !event.isPClubEvent);
+      setEventsToShow(nitkEvents);
     }
+  };
 
-    useEffect(() => {
-        handleTabClick(activeTab);
-    }, [events]);
-   
+  useEffect(() => {
+    handleTabClick(activeTab);
+  }, [events]);
 
-    if (id) {
-        return <Outlet />
-    }
+  if (id) {
+    return <Outlet />;
+  }
 
-
-
-
-    return (
-        <div className="max-w-container mx-auto px-container-px md:px-container-px-md py-8">
-
-            {/* top most section  */}
-            <div className="mt-3 flex flex-col justify-center items-center gap-y-4 px-4 sm:px-6 lg:px-8">
-                <span className="text-center font-bold text-3xl border-[1.2px] border-black rounded-full px-8 py-3 w-auto sm:text-4xl lg:text-5xl">
-                    Club Events
-                </span>
-                <span className="text-md opacity-60 sm:text-lg lg:text-xl lg:max-w-2xl text-center">
-                    Check out all the events we have planned for you;<br />
-                    And the ones we&apos;ve hosted before.
-                </span>
-                {/* tabs part  */}
-                <div className='mt-5'>
-                    <ModularTabs tabs={navItems} activeTab={activeTab} onTabClick={handleTabClick} />
-                </div>
-            </div>
-
-
-            {/*Content part  */}
-            <div className='mt-5'>
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                    {eventsToShow.map((event, index) => (
-                        <EventsThumb event={event} key={index} thinVariant={false} variant="grid" />
-                    ))}
-                </div>
-
-
-            </div>
-
-
+  return (
+    <div className="max-w-container mx-auto px-container-px md:px-container-px-md py-8">
+      {/* top most section  */}
+      <div className="mt-3 flex flex-col justify-center items-center gap-y-4 px-4 sm:px-6 lg:px-8">
+        <span className="text-center font-bold text-3xl border-[1.2px] border-black rounded-full px-8 py-3 w-auto sm:text-4xl lg:text-5xl">
+          Club Events
+        </span>
+        <span className="text-md opacity-60 sm:text-lg lg:text-xl lg:max-w-2xl text-center">
+          Check out all the events we have planned for you;
+          <br />
+          And the ones we&apos;ve hosted before.
+        </span>
+        {/* tabs part  */}
+        <div className="mt-5">
+          <ModularTabs
+            tabs={navItems}
+            activeTab={activeTab}
+            onTabClick={handleTabClick}
+          />
         </div>
-    )
+      </div>
+
+      {/*Content part  */}
+      <div className="mt-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {eventsToShow.map((event, index) => (
+            <EventsThumb
+              event={event}
+              key={index}
+              thinVariant={false}
+              variant="grid"
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 /*const events = [
@@ -138,12 +153,10 @@ function Events() {
 ]
 */
 const navItems = [
-    { id: 'upcoming', label: 'Upcoming' },
-    { id: 'all', label: 'All' },
-    { id: 'pclub', label: 'PClub' },
-    {id: 'nitkevents', label: 'NITK Events'},
-]
+  { id: "upcoming", label: "Upcoming" },
+  { id: "all", label: "All" },
+  { id: "pclub", label: "PClub" },
+  { id: "nitkevents", label: "NITK Events" },
+];
 
-
-
-export default Events
+export default Events;

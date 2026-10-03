@@ -1,4 +1,4 @@
-import { Outlet, useParams } from "react-router";
+import { Outlet, useParams, useNavigate } from "react-router";
 import { useState } from "react";
 import Dropdown from "../../components/filtersort/dropdown";
 import EventsThumb from "../../components/events/eventsThumb";
@@ -8,6 +8,22 @@ import axios from "axios";
 
 function Events() {
   const { id } = useParams();
+  const navigate = useNavigate();
+
+  const token = localStorage.getItem("authToken");
+
+  let user = null;
+
+  try {
+    if (token) {
+      user = JSON.parse(atob(token.split(".")[1]));
+    }
+  } catch {
+    user = null;
+  }
+
+  const canCreateEvent =
+    user?.role === "admin" || user?.role === "sig-coordinator";
   const [activeTab, setActiveTab] = useState("upcoming");
   const [eventsToShow, setEventsToShow] = useState([]);
   const [events, setEvents] = useState([]);
@@ -93,6 +109,17 @@ function Events() {
             activeTab={activeTab}
             onTabClick={handleTabClick}
           />
+
+          {canCreateEvent && (
+            <div className="mt-5 flex justify-center">
+              <button
+                onClick={() => navigate("/events/create")}
+                className="rounded-lg bg-primary px-5 py-2 font-semibold text-white hover:bg-red-400"
+              >
+                Create Event
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

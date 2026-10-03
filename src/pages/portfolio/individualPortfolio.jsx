@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import PhotoGrid from "../../components/portfolio/PhotoGrid";
 import UserCard from "../../components/portfolio/UserCard";
-import { TabContext } from "../../context/TabContext";
+import { TabContext } from "../../pages/context/TabContext";
 import { navigateSmooth } from "../../utils/helperFunctions";
 
 const IndividualPortfolio = () => {

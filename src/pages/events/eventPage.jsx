@@ -32,149 +32,112 @@ function EventPage() {
   const location = useLocation();
   const [selectedImage, setSelectedImage] = useState(null);
   const [eventImages, setEventImages] = useState([]);
+  const [eventData, setEventData] = useState(null);
+  const token = localStorage.getItem("authToken");
+
+  let user = null;
+
+  try {
+    if (token) {
+      user = JSON.parse(atob(token.split(".")[1]));
+    }
+  } catch (err) {
+    console.error("Invalid token");
+  }
+
+  console.log("CURRENT USER FROM JWT:", user);
+
+  // const canManageEvent =
+  //   user?.appRole === "admin" || user?.appRole === "sig-coordinator";
+  const canManageEvent =
+    user?.role === "admin" || user?.role === "sig-coordinator";
 
   useEffect(() => {
     const fetchGallery = async () => {
-        try {
-            // Get all events
-            const eventsRes = await axios.get(
-                "http://localhost:1337/api/events"
-            );
+      try {
+        // Get all events
+        const eventsRes = await axios.get("http://localhost:1337/api/events");
 
-            const events =
-                eventsRes.data.data || [];
+        const events = eventsRes.data.data || [];
 
-            // URL /events/1 -> EventId "1"
-            const currentEvent =
-                events.find(
-                    (event) =>
-                        String(event.EventId) ===
-                        String(id)
-                );
+        // URL /events/1 -> EventId "1"
+        const currentEvent = events.find(
+          (event) => String(event.EventId) === String(id),
+        );
 
-            if (!currentEvent) {
-                console.error(
-                    "Event not found:",
-                    id
-                );
+        if (!currentEvent) {
+          console.error("Event not found:", id);
 
-                setEventImages([]);
-                return;
-            }
-
-            const eventDocumentId =
-                currentEvent.documentId;
-
-            console.log(
-                "EVENT ROUTE ID:",
-                id
-            );
-
-            console.log(
-                "EVENT DOCUMENT ID:",
-                eventDocumentId
-            );
-
-            // PUBLIC
-            const publicRes =
-                await axios.get(
-                    `http://localhost:1337/api/gallery/public?event=${eventDocumentId}`
-                );
-
-            const publicPhotos =
-                publicRes.data.photos || [];
-
-            console.log(
-                "EVENT PUBLIC PHOTOS:",
-                publicPhotos
-            );
-
-            let photos = [
-                ...publicPhotos,
-            ];
-
-            // PRIVATE — only NITK users
-            const token =
-                localStorage.getItem(
-                    "authToken"
-                );
-
-            if (token) {
-                try {
-                    const privateRes =
-                        await axios.get(
-                            `http://localhost:1337/api/gallery/private?event=${eventDocumentId}`,
-                            {
-                                headers: {
-                                    Authorization:
-                                        `Bearer ${token}`,
-                                },
-                            }
-                        );
-
-                    const privatePhotos =
-                        privateRes.data.photos ||
-                        [];
-
-                    console.log(
-                        "EVENT PRIVATE PHOTOS:",
-                        privatePhotos
-                    );
-
-                    photos = [
-                        ...photos,
-                        ...privatePhotos,
-                    ];
-                } catch (error) {
-                    console.log(
-                        "Private photos unavailable:",
-                        error.response?.status
-                    );
-                }
-            }
-
-            // Remove duplicates
-            const uniquePhotos =
-                Array.from(
-                    new Map(
-                        photos.map(
-                            (photo) => [
-                                photo.documentId,
-                                photo,
-                            ]
-                        )
-                    ).values()
-                );
-
-            const formattedPhotos =
-                uniquePhotos.map(
-                    (photo) => ({
-                        src: photo.image?.url
-                            ? `http://localhost:1337${photo.image.url}`
-                            : "",
-
-                        name:
-                            photo.image?.name ||
-                            photo.title ||
-                            "event-photo.jpg",
-                    })
-                );
-
-            setEventImages(
-                formattedPhotos
-            );
-        } catch (error) {
-            console.error(
-                "Failed to load event gallery:",
-                error
-            );
-
-            setEventImages([]);
+          setEventImages([]);
+          return;
         }
+
+        setEventData(currentEvent);
+
+        const eventDocumentId = currentEvent.documentId;
+
+        console.log("EVENT ROUTE ID:", id);
+
+        console.log("EVENT DOCUMENT ID:", eventDocumentId);
+
+        // PUBLIC
+        const publicRes = await axios.get(
+          `http://localhost:1337/api/gallery/public?event=${eventDocumentId}`,
+        );
+
+        const publicPhotos = publicRes.data.photos || [];
+
+        console.log("EVENT PUBLIC PHOTOS:", publicPhotos);
+
+        let photos = [...publicPhotos];
+
+        // PRIVATE — only NITK users
+        const token = localStorage.getItem("authToken");
+
+        if (token) {
+          try {
+            const privateRes = await axios.get(
+              `http://localhost:1337/api/gallery/private?event=${eventDocumentId}`,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              },
+            );
+
+            const privatePhotos = privateRes.data.photos || [];
+
+            console.log("EVENT PRIVATE PHOTOS:", privatePhotos);
+
+            photos = [...photos, ...privatePhotos];
+          } catch (error) {
+            console.log("Private photos unavailable:", error.response?.status);
+          }
+        }
+
+        // Remove duplicates
+        const uniquePhotos = Array.from(
+          new Map(photos.map((photo) => [photo.documentId, photo])).values(),
+        );
+
+        const formattedPhotos = uniquePhotos.map((photo) => ({
+          src: photo.image?.url
+            ? `http://localhost:1337${photo.image.url}`
+            : "",
+
+          name: photo.image?.name || photo.title || "event-photo.jpg",
+        }));
+
+        setEventImages(formattedPhotos);
+      } catch (error) {
+        console.error("Failed to load event gallery:", error);
+
+        setEventImages([]);
+      }
     };
 
     fetchGallery();
-}, [id]);
+  }, [id]);
 
   // Determine if user came from home page
   const isFromHome = location.state?.from === "home";
@@ -200,68 +163,132 @@ function EventPage() {
         {isFromHome ? "Go Back" : "All Events"}
       </button>
 
-      <div className="relative z-[1] flex flex-col items-center gap-2 px-2 md:px-4 pt-5 mb-4 cursor-default">
-        {thisEvent.thumbnailColor && (
-          <div
-            style={{ backgroundColor: thisEvent.thumbnailColor }}
-            className="absolute inset-0 w-full h-full"
-          >
-            <img
-              src={noiseImage}
-              alt="noise"
-              className="absolute inset-0 w-full h-full contrast-200 opacity-50 md:opacity-80 mix-blend-overlay pointer-events-none"
-            />
+      {/* Event Hero */}
+      <div
+        className="relative overflow-hidden rounded-xl mb-8"
+        style={{
+          backgroundColor: eventData?.thumbnailColor || "#E195AB",
+        }}
+      >
+        <img
+          src={noiseImage}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay"
+        />
+
+        <div className="relative z-10 flex flex-col items-center text-center px-6 py-10 md:py-14">
+          {/* Event Name */}
+          <p className="mb-3 text-xs md:text-sm font-semibold uppercase tracking-[0.35em] text-white/80">
+            {eventData?.EventName}
+          </p>
+
+          {/* Title */}
+          <h1 className="font-playfair text-4xl md:text-6xl lg:text-7xl font-semibold leading-tight tracking-tight text-white drop-shadow-lg uppercase">
+            {eventData?.Title}
+          </h1>
+
+          {/* Countdown */}
+          <div className="mt-5 inline-flex rounded-full border border-white/30 bg-black/10 px-5 py-2 backdrop-blur-sm">
+            <p className="text-sm md:text-base font-medium uppercase tracking-[0.18em] text-white">
+              {eventData?.dateTime && getDifference(eventData.dateTime)}
+            </p>
           </div>
-        )}
-        <p className="z-[2] font-playfair text-white text-[52px] font-medium leading-[1] py-2">
-          {thisEvent.title}
-        </p>
-        <p className="z-[2] text-white uppercase text-[20px] font-medium leading-[0] py-3 pb-10">
-          {getDifference(thisEvent.dateTime)}
-        </p>
+        </div>
       </div>
-      <div className="flex flex-col md:flex-row md:justify-between">
-        <div className="flex flex-col gap-2 pt-2">
-          <span className="flex items-center gap-2 font-bold text-md text-gray-500">
-            <MdEvent size={24} /> {formatDateTime(thisEvent.dateTime)}
-          </span>
-          <span className="flex items-center gap-2 font-bold text-md text-gray-500">
-            <GrLocation size={24} />
-            {thisEvent.locationLink ? (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        {/* Date */}
+        <div className="flex items-start gap-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gray-100">
+            <MdEvent size={22} className="text-gray-600" />
+          </div>
+
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">
+              Date & Time
+            </p>
+
+            <p className="mt-1 font-semibold text-gray-800">
+              {formatDateTime(eventData?.dateTime)}
+            </p>
+          </div>
+        </div>
+
+        {/* Location */}
+        <div className="flex items-start gap-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gray-100">
+            <GrLocation size={21} className="text-gray-600" />
+          </div>
+
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">
+              Location
+            </p>
+
+            {eventData?.locationLink ? (
               <a
-                href={thisEvent.locationLink}
+                href={eventData.locationLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="underline hover:text-blue-500 transition-colors"
+                className="mt-1 block font-semibold text-gray-800 underline decoration-gray-300 underline-offset-4 transition hover:text-primary"
               >
-                {thisEvent.location}
+                {eventData.location}
               </a>
             ) : (
-              thisEvent.location
+              <p className="mt-1 font-semibold text-gray-800">
+                {eventData?.location}
+              </p>
             )}
-          </span>
-        </div>
-        <div>
-          <button
-            className="mt-10 w-[130px] rounded-[8px] bg-primary px-4 py-2 text-[14px] text-complementPrimary transition-all duration-200 hover:bg-red-400 hover:drop-shadow-xl md:mt-3"
-            onClick={() => (window.location.href = thisEvent.action.link)}
-          >
-            {thisEvent.action.text}
-          </button>
+          </div>
         </div>
       </div>
+
+      {/* RSVP Button */}
+      {eventData?.buttonLink && (
+        <div className="flex justify-center mb-10">
+          <a
+            href={eventData.buttonLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              backgroundColor: eventData.buttonColor || "#000000",
+            }}
+            className="inline-flex items-center justify-center rounded-full px-8 py-3 text-sm font-bold uppercase tracking-wider text-white shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+          >
+            RSVP Here
+          </a>
+        </div>
+      )}
       <hr className="border-t-3 border-secondary my-10" />
-      <MarkdownPreview
-        wrapperElement={{ "data-color-mode": "light" }}
-        source={thisEvent.content}
-        className="wmde-markdown"
-      />
+      <div className="mb-10 rounded-xl bg-gray-50 px-6 py-7 md:px-8">
+        <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em] text-gray-400">
+          About the Event
+        </p>
+
+        <p className="text-[17px] md:text-[18px] leading-8 text-gray-700 font-sans tracking-wide">
+          {eventData?.description
+            ? eventData.description.charAt(0).toUpperCase() +
+              eventData.description.slice(1)
+            : ""}
+        </p>
+      </div>
 
       {/* Gallery Section */}
       <hr className="border-t-3 border-secondary my-10" />
-      <h2 className="text-2xl font-bold mb-4">
-        Captured Moments from NITK Events
-      </h2>
+
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-2xl font-bold">
+          Captured Moments from NITK Events
+        </h2>
+
+        {canManageEvent && (
+          <button
+            onClick={() => navigate(`/events/${id}/upload`)}
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-red-400"
+          >
+            Add Photos
+          </button>
+        )}
+      </div>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {eventImages.map((image, index) => (
           <div key={index} className="relative group">

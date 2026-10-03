@@ -4,7 +4,7 @@ import { FiCamera } from "react-icons/fi";
 import { FaRegUser } from "react-icons/fa";
 import { AiOutlineClose, AiOutlineMenu } from 'react-icons/ai'
 import { useState } from "react";
-import { useTheme } from "../../context/ThemeContext"
+import { useTheme } from "../../pages/context/ThemeContext"
 import Button from "../Button"
 import { navigateSmooth } from "../../utils/helperFunctions"
 import AuthTest from "../auth/AuthTest";

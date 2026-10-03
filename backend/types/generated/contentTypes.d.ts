@@ -483,23 +483,86 @@ export interface ApiEventEvent extends Struct.CollectionTypeSchema {
     draftAndPublish: true;
   };
   attributes: {
+    buttonColor: Schema.Attribute.String;
+    buttonLink: Schema.Attribute.String;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    dateTime: Schema.Attribute.DateTime;
-    description: Schema.Attribute.Text;
-    EventId: Schema.Attribute.String & Schema.Attribute.Unique;
+    dateTime: Schema.Attribute.DateTime & Schema.Attribute.Required;
+    description: Schema.Attribute.Text & Schema.Attribute.Required;
+    EventId: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique;
     EventName: Schema.Attribute.String & Schema.Attribute.Required;
-    isPClubEvent: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    isPClubEvent: Schema.Attribute.Boolean &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<false>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::event.event'> &
       Schema.Attribute.Private;
-    location: Schema.Attribute.String &
-      Schema.Attribute.DefaultTo<'NITK, Surathkal, Karnataka'>;
+    location: Schema.Attribute.String & Schema.Attribute.Required;
+    locationLink: Schema.Attribute.String;
+    photos: Schema.Attribute.Relation<'oneToMany', 'api::photo.photo'>;
     publishedAt: Schema.Attribute.DateTime;
+    thumbnailColor: Schema.Attribute.String;
+    Title: Schema.Attribute.String & Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+  };
+}
+
+export interface ApiPhotoPhoto extends Struct.CollectionTypeSchema {
+  collectionName: 'photos';
+  info: {
+    displayName: 'Photos';
+    pluralName: 'photos';
+    singularName: 'photo';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    capturedBy: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    >;
+    capturedDate: Schema.Attribute.Date;
+    category: Schema.Attribute.String;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    displayOrder: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
+    event: Schema.Attribute.Relation<'manyToOne', 'api::event.event'>;
+    image: Schema.Attribute.Media<'images'> & Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::photo.photo'> &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    tag: Schema.Attribute.Enumeration<
+      [
+        'Event',
+        'Workshop',
+        'Portrait',
+        'Nature',
+        'Street',
+        'Wildlife',
+        'Sports',
+        'Club Activity',
+        'Other',
+      ]
+    >;
+    title: Schema.Attribute.String;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    uploadedBy: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    >;
+    visibility: Schema.Attribute.Enumeration<['public', 'private']> &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'private'>;
   };
 }
 
@@ -1006,6 +1069,8 @@ export interface PluginUsersPermissionsUser
     draftAndPublish: false;
   };
   attributes: {
+    appRole: Schema.Attribute.Enumeration<['user', 'club-member', 'admin']> &
+      Schema.Attribute.DefaultTo<'user'>;
     avatar: Schema.Attribute.Media<'images'>;
     bio: Schema.Attribute.Text;
     blocked: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
@@ -1022,6 +1087,7 @@ export interface PluginUsersPermissionsUser
     googleId: Schema.Attribute.String & Schema.Attribute.Unique;
     googlePicture: Schema.Attribute.String;
     instagram: Schema.Attribute.String;
+    isNitk: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -1069,6 +1135,7 @@ declare module '@strapi/strapi' {
       'admin::user': AdminUser;
       'api::category.category': ApiCategoryCategory;
       'api::event.event': ApiEventEvent;
+      'api::photo.photo': ApiPhotoPhoto;
       'api::post.post': ApiPostPost;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;

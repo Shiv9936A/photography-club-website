@@ -2,23 +2,11 @@ import React, { useState } from "react";
 
 import Photos from "../../components/photoReels/Photos";
 import Reels from "../../components/photoReels/Reels";
-import PrivateGallery from "../../components/photoReels/PrivateGallery";
+// import PrivateGallery from "../../components/photoReels/PrivateGallery";
 import Tab from "../../components/photoReels/Tab";
 
 const PhotoReels = () => {
   const [activeTab, setActiveTab] = useState("Photos");
-  const token = localStorage.getItem("authToken");
-  let user = null;
-
-  try {
-    if (token) {
-      user = JSON.parse(atob(token.split(".")[1]));
-    }
-  } catch (error) {
-    console.error("Invalid token:", error);
-  }
-
-  const isNitk = user?.isNitk === true;
 
   const renderTabContent = () => {
     if (activeTab === "Photos") {
@@ -27,10 +15,6 @@ const PhotoReels = () => {
 
     if (activeTab === "Reels") {
       return <Reels />;
-    }
-
-    if (activeTab === "Private" && isNitk) {
-      return <PrivateGallery />;
     }
 
     return <Photos />;
@@ -50,11 +34,7 @@ const PhotoReels = () => {
 
       {/* Tabs */}
       <div className="mt-11">
-        <Tab
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          isNitk={isNitk}
-        />
+        <Tab activeTab={activeTab} setActiveTab={setActiveTab} />
       </div>
 
       {/* Content */}

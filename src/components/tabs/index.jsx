@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useContext } from 'react';
-import { TabContext } from '../../context/TabContext';
+import { TabContext } from '../../pages/context/TabContext';
 
 
 export default function Tabs() {

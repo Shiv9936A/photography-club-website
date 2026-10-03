@@ -1,3 +1,4 @@
+// @ts-nocheck
 'use strict';
 
 module.exports = {
@@ -18,3 +19,5 @@ module.exports = {
    */
   bootstrap(/*{ strapi }*/) {},
 };
+
+

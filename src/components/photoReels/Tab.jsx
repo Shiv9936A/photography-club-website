@@ -3,7 +3,6 @@ import React from "react";
 const Tab = ({
     activeTab,
     setActiveTab,
-    isNitk,
 }) => {
     const getClass = (tab) =>
         `flex justify-center items-center px-6 py-2 font-medium text-sm border-2 rounded-full ${
@@ -28,15 +27,6 @@ const Tab = ({
             >
                 🎥 Reels
             </button>
-
-            {isNitk && (
-                <button
-                    onClick={() => setActiveTab("Private")}
-                    className={getClass("Private")}
-                >
-                    🔒 Private
-                </button>
-            )}
 
         </div>
     );

@@ -13,7 +13,12 @@
   "attributes": {
     "EventId": {
       "type": "string",
-      "unique": true
+      "unique": true,
+      "required": true
+    },
+    "Title": {
+      "type": "string",
+      "required": true
     },
     "EventName": {
       "type": "string",
@@ -21,18 +26,36 @@
     },
     "description": {
       "type": "text",
-      "required": false
+      "required": true
     },
     "location": {
       "type": "string",
-      "default": "NITK, Surathkal, Karnataka"
+      "required": true
+    },
+    "locationLink": {
+      "type": "string",
+      "required": false
     },
     "dateTime": {
-      "type": "datetime"
+      "type": "datetime",
+      "required": true
     },
     "isPClubEvent": {
       "type": "boolean",
-      "default": false
+      "default": false,
+      "required": true
+    },
+    "buttonLink": {
+      "type": "string",
+      "required": false
+    },
+    "buttonColor": {
+      "type": "string",
+      "required": false
+    },
+    "thumbnailColor": {
+      "type": "string",
+      "required": false
     },
     "photos": {
       "type": "relation",

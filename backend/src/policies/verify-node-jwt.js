@@ -1,5 +1,4 @@
 // @ts-nocheck
-
 "use strict";
 
 const jwt = require("jsonwebtoken");
@@ -65,9 +64,7 @@ module.exports = async (policyContext) => {
 
         let user = null;
 
-        /*
-         * Try Strapi user ID
-         */
+        // Try Strapi user ID
         if (decoded.id) {
             user = await userQuery.findOne({
                 where: {
@@ -76,9 +73,7 @@ module.exports = async (policyContext) => {
             });
         }
 
-        /*
-         * Try Google ID
-         */
+        // Try Google ID
         if (!user && decoded.googleId) {
             user = await userQuery.findOne({
                 where: {
@@ -87,9 +82,7 @@ module.exports = async (policyContext) => {
             });
         }
 
-        /*
-         * Try email
-         */
+        // Try email
         if (!user && decoded.email) {
             user = await userQuery.findOne({
                 where: {
@@ -98,9 +91,7 @@ module.exports = async (policyContext) => {
             });
         }
 
-        /*
-         * Try JWT subject as Google ID
-         */
+        // Try JWT subject as Google ID
         if (!user && decoded.sub) {
             user = await userQuery.findOne({
                 where: {
@@ -110,27 +101,18 @@ module.exports = async (policyContext) => {
         }
 
         if (!user) {
-            console.log(
-                "JWT: Strapi user not found"
-            );
-
+            console.log("JWT: Strapi user not found");
             return false;
         }
 
-        console.log(
-            "AUTHENTICATED USER:",
-            {
-                id: user.id,
-                email: user.email,
-                isNitk: user.isNitk,
-                appRole: user.appRole,
-            }
-        );
+        console.log("AUTHENTICATED USER:", {
+            id: user.id,
+            email: user.email,
+            isNitk: user.isNitk,
+            appRole: user.appRole,
+        });
 
-        /*
-         * IMPORTANT:
-         * Store the actual Strapi user.
-         */
+        // Store authenticated Strapi user
         policyContext.state.user = user;
 
         return true;

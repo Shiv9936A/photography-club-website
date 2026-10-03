@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import Button from "../Button";
 import { FiX } from "react-icons/fi";
 import { getPhotos } from "../util/postApi";
+import { Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Photos = () => {
   const [viewAll, setViewAll] = useState(false);
@@ -10,6 +12,24 @@ const Photos = () => {
   const [category, setCategory] = useState("View all");
   const [photos, setPhotos] = useState([]);
   const [error, setError] = useState(null);
+  const token = localStorage.getItem("authToken");
+  const navigate = useNavigate();
+
+  let user = null;
+
+  try {
+    if (token) {
+      user = JSON.parse(atob(token.split(".")[1]));
+    }
+  } catch {}
+
+  // const canUpload =
+  //   user?.appRole === "convenor" || user?.appRole === "media-head" || user?.appRole === "admin";
+
+  const canUpload =
+  user?.email ===
+  "rshivakumar.241cs245@nitk.edu.in";
+  console.log("TOKEN USER:", user);
 
   useEffect(() => {
     const fetchContent = async () => {
@@ -26,12 +46,11 @@ const Photos = () => {
 
   // Categories similar to team tabs
   const categories = [
-    { name: "View all", href: "#" },
-    { name: "Nature", href: "#" },
-    { name: "Portrait", href: "#" },
-    { name: "Street", href: "#" },
-    { name: "Architecture", href: "#" },
-    { name: "Events", href: "#" },
+    { name: "View all" },
+
+    ...[...new Set(photos.map((p) => p.category).filter(Boolean))].map(
+      (name) => ({ name }),
+    ),
   ];
 
   // Filter photos based on selected category
@@ -45,6 +64,14 @@ const Photos = () => {
 
   return (
     <div className="py-12 bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-end mb-6">
+        {canUpload && (
+          <button onClick={() => navigate("/upload-photo")} className="flex items-center gap-2 bg-black text-white px-5 py-2 rounded-full hover:opacity-90">
+            <Plus size={18} />
+            Upload Photo
+          </button>
+        )}
+      </div>
       {/* Categories/Tabs */}
       <div className="mb-12">
         <div className="sm:hidden px-4">
@@ -120,6 +147,10 @@ const Photos = () => {
                       </h3>
                       <p className="text-gray-600 text-xs">
                         By {photo.photographer}
+                      </p>
+
+                      <p className="text-gray-500 text-[10px]">
+                        {photo.category}
                       </p>
                     </div>
                   </div>
@@ -213,6 +244,15 @@ const Photos = () => {
                 <div>
                   <span className="font-medium">Category:</span>{" "}
                   {selectedPhoto.category}
+                </div>
+                <div>
+                  <span className="font-medium">Captured By:</span>{" "}
+                  {selectedPhoto.photographer}
+                </div>
+
+                <div>
+                  <span className="font-medium">Captured Date:</span>{" "}
+                  {selectedPhoto.date}
                 </div>
                 <div>
                   <span className="font-medium">Date:</span>{" "}

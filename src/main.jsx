@@ -5,7 +5,7 @@ import "./index.css";
 import "./styles/themes.css";
 import App from "./App.jsx";
 import { BrowserRouter } from "react-router";
-import { TabContextProvider } from "./context/TabContext.jsx";
+import { TabContextProvider } from "./pages/context/TabContext.jsx";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;

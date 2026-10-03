@@ -12,11 +12,14 @@ import Header from "./components/header";
 import Footer from "./components/footer";
 import PortfolioPage from "./pages/portfolio/portfolio";
 import IndividualPortfolio from "./pages/portfolio/individualPortfolio";
-import { ThemeProvider } from "./context/ThemeContext";
+import { ThemeProvider } from "./pages/context/ThemeContext";
 import PortfolioLayout from "./pages/portfolio/index";
 import AuthTest from "./components/auth/AuthTest";
+import UploadPhoto from "./pages/photoreel/UploadPhoto";
+import EventPhotoUpload from "./components/events/EventPhotoUpload";
+import CreateEvent from "./pages/events/CreateEvent";
 
-export default function App () {
+export default function App() {
   return (
     <div>
       <ThemeProvider>
@@ -30,6 +33,7 @@ export default function App () {
                 <Route path=":id" element={<IndividualPortfolio />} />
               </Route>
               <Route path="/photo-reels" element={<PhotoReels />} />
+              <Route path="/events/create" element={<CreateEvent />} />
               <Route path="/events" element={<Events />}>
                 <Route path=":id" element={<EventPage />} />
               </Route>
@@ -37,6 +41,8 @@ export default function App () {
                 <Route path=":id" element={<BlogPage />} />
               </Route>
               <Route path="/auth-test" element={<AuthTest />} />
+              <Route path="/upload-photo" element={<UploadPhoto />} />
+              <Route path="/events/:id/upload" element={<EventPhotoUpload />} />
             </Routes>
           </div>
           <Footer />

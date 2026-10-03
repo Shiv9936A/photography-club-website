@@ -22,7 +22,7 @@ module.exports = createCoreRouter(
           {
             name: "global::require-role",
             config: {
-              roles: ["admin"],
+              roles: ["admin", "sig-coordinator"],
             },
           },
         ],
@@ -35,7 +35,7 @@ module.exports = createCoreRouter(
           {
             name: "global::require-role",
             config: {
-              roles: ["admin"],
+              roles: ["admin", "sig-coordinator"],
             },
           },
         ],
@@ -48,7 +48,7 @@ module.exports = createCoreRouter(
           {
             name: "global::require-role",
             config: {
-              roles: ["admin"],
+              roles: ["admin", "sig-coordinator"],
             },
           },
         ],

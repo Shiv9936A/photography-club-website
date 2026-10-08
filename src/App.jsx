@@ -33,6 +33,7 @@ export default function App() {
                 <Route path=":id" element={<IndividualPortfolio />} />
               </Route>
               <Route path="/photo-reels" element={<PhotoReels />} />
+              <Route path="/photo-reels/:photoId" element={<PhotoReels />} />
               <Route path="/events/create" element={<CreateEvent />} />
               <Route path="/events" element={<Events />}>
                 <Route path=":id" element={<EventPage />} />

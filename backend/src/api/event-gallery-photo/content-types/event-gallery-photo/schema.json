@@ -1,10 +1,10 @@
 {
   "kind": "collectionType",
-  "collectionName": "photos",
+  "collectionName": "event_gallery_photos",
   "info": {
-    "singularName": "photo",
-    "pluralName": "photos",
-    "displayName": "Photos"
+    "singularName": "event-gallery-photo",
+    "pluralName": "event-gallery-photos",
+    "displayName": "Event Gallery Photo"
   },
   "options": {
     "draftAndPublish": true
@@ -23,42 +23,21 @@
     "visibility": {
       "type": "enumeration",
       "enum": ["public", "private"],
-      "default": "private",
+      "default": "public",
       "required": true
     },
-    "capturedDate": {
-      "type": "date"
+    "event": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::event.event"
     },
-
     "uploadedBy": {
       "type": "relation",
       "relation": "manyToOne",
       "target": "plugin::users-permissions.user"
     },
-
-    "capturedBy": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "plugin::users-permissions.user"
-    },
-    "tag": {
-      "type": "enumeration",
-      "enum": [
-        "Event",
-        "Workshop",
-        "Portrait",
-        "Nature",
-        "Street",
-        "Wildlife",
-        "Sports",
-        "Club Activity",
-        "Other"
-      ]
-    },
-
-    "likesCount": {
-      "type": "integer",
-      "default": 0
+    "capturedDate": {
+      "type": "date"
     }
   }
 }

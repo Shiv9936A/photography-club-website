@@ -1,145 +1,195 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import { API_URL } from "../../components/util/api";
+import {
+  canUploadPhoto,
+  getPhotoUploadSession,
+} from "../../components/photoReels/photoUploadAccess";
+
+const TAGS = [
+  "Event",
+  "Workshop",
+  "Portrait",
+  "Nature",
+  "Street",
+  "Wildlife",
+  "Sports",
+  "Club Activity",
+  "Other",
+];
 
 export default function UploadPhoto() {
-  const [title, setTitle] = useState("");
-  const [tag, setTag] = useState("Wildlife");
-  const [file, setFile] = useState(null);
+  const navigate = useNavigate();
+  const session = getPhotoUploadSession();
+  const allowed = canUploadPhoto(session);
 
-  const [users, setUsers] = useState([]);
-  const [capturedBy, setCapturedBy] = useState("");
+  const [title, setTitle] = useState("");
+  const [file, setFile] = useState(null);
+  const [visibility, setVisibility] = useState("public");
+  const [capturedDate, setCapturedDate] = useState("");
+  const [tag, setTag] = useState("Other");
+  const [uploading, setUploading] = useState(false);
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const token = localStorage.getItem("authToken");
+    if (!allowed) {
+      navigate("/photo-reels", { replace: true });
+      return;
+    }
 
-        const res = await axios.get(
-          `${API_URL}/api/gallery/members`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+  }, [allowed, navigate]);
 
-        setUsers(res.data || []);
-      } catch (error) {
-        console.error(
-          "Failed to load users:",
-          error.response?.data || error
-        );
-      }
-    };
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setMessage("");
 
-    fetchUsers();
-  }, []);
+    if (!allowed || !session?.token) {
+      navigate("/photo-reels", { replace: true });
+      return;
+    }
 
-  const uploadPhoto = async () => {
+    if (!file) {
+      setMessage("Choose an image to upload.");
+      return;
+    }
+
     try {
-      if (!file) {
-        alert("Please select a photo");
-        return;
-      }
-
-      if (!capturedBy) {
-        alert("Please select who captured the photo");
-        return;
-      }
-
-      const token = localStorage.getItem("authToken");
+      setUploading(true);
 
       const formData = new FormData();
-
       formData.append("files", file);
-      formData.append("title", title);
+      formData.append("title", title.trim());
+      formData.append("visibility", visibility);
+      formData.append("capturedDate", capturedDate);
       formData.append("tag", tag);
-      formData.append("visibility", "public");
-      formData.append("capturedBy", capturedBy);
 
-      await axios.post(
-        `${API_URL}/api/gallery/upload`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await axios.post(`${API_URL}/api/gallery/upload`, formData, {
+        headers: {
+          Authorization: `Bearer ${session.token}`,
+        },
+      });
 
-      alert("Photo uploaded successfully!");
-
+      setMessage("Photo uploaded successfully.");
       setTitle("");
-      setCapturedBy("");
       setFile(null);
+      setVisibility("public");
+      setCapturedDate("");
+      setTag("Other");
+      navigate("/photo-reels");
     } catch (error) {
-      console.error(
-        "Photo upload error:",
-        error.response?.data || error
+      console.error("Photo upload failed:", error.response?.data || error);
+      setMessage(
+        error.response?.data?.error?.message || "Photo upload failed.",
       );
-
-      alert("Upload failed");
+    } finally {
+      setUploading(false);
     }
   };
 
+  if (!allowed) return null;
+
   return (
     <div className="max-w-xl mx-auto p-6 space-y-5">
-      <h1 className="text-2xl font-bold">
-        Upload Photo
-      </h1>
+      <h1 className="text-2xl font-bold">Upload Photo</h1>
 
-      <input
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder="Title"
-        className="w-full border rounded-lg px-4 py-2"
-      />
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div>
+          <label htmlFor="photo-title" className="block mb-2 font-medium">
+            Title
+          </label>
+          <input
+            id="photo-title"
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            className="w-full border rounded-lg px-4 py-2"
+          />
+        </div>
 
-      <select
-        value={capturedBy}
-        onChange={(e) => setCapturedBy(e.target.value)}
-        className="w-full border rounded-lg px-4 py-2"
-      >
-        <option value="">
-          Select Photographer
-        </option>
+        <div>
+          <label htmlFor="photo-image" className="block mb-2 font-medium">
+            Image
+          </label>
+          <input
+            id="photo-image"
+            type="file"
+            accept="image/*"
+            required
+            onChange={(event) => setFile(event.target.files?.[0] || null)}
+          />
+        </div>
 
-        {users.map((user) => (
-          <option key={user.id} value={user.id}>
-            {user.username}
-          </option>
-        ))}
-      </select>
+        <div>
+          <label htmlFor="photo-visibility" className="block mb-2 font-medium">
+            Visibility
+          </label>
+          <select
+            id="photo-visibility"
+            value={visibility}
+            onChange={(event) => setVisibility(event.target.value)}
+            className="w-full border rounded-lg px-4 py-2"
+          >
+            <option value="public">Public</option>
+            <option value="private">Private</option>
+          </select>
+        </div>
 
-      <select
-        value={tag}
-        onChange={(e) => setTag(e.target.value)}
-        className="w-full border rounded-lg px-4 py-2"
-      >
-        <option>Event</option>
-        <option>Workshop</option>
-        <option>Portrait</option>
-        <option>Nature</option>
-        <option>Street</option>
-        <option>Wildlife</option>
-        <option>Sports</option>
-        <option>Club Activity</option>
-        <option>Other</option>
-      </select>
+        <div>
+          <label htmlFor="photo-captured-date" className="block mb-2 font-medium">
+            Captured Date
+          </label>
+          <input
+            id="photo-captured-date"
+            type="date"
+            value={capturedDate}
+            onChange={(event) => setCapturedDate(event.target.value)}
+            className="w-full border rounded-lg px-4 py-2"
+          />
+        </div>
 
-      <input
-        type="file"
-        accept="image/*"
-        onChange={(e) => setFile(e.target.files[0])}
-      />
+        <div>
+          <label htmlFor="photo-captured-by" className="block mb-2 font-medium">
+            Captured By
+          </label>
+          <input
+            id="photo-captured-by"
+            value={session?.name || session?.email || "Current user"}
+            readOnly
+            className="w-full border rounded-lg px-4 py-2 bg-gray-100"
+          />
+          <p className="mt-1 text-xs text-gray-500">
+            Assigned to your authenticated account.
+          </p>
+        </div>
 
-      <button
-        onClick={uploadPhoto}
-        className="bg-black text-white px-5 py-2 rounded-lg"
-      >
-        Upload
-      </button>
+        <div>
+          <label htmlFor="photo-tag" className="block mb-2 font-medium">
+            Tag
+          </label>
+          <select
+            id="photo-tag"
+            value={tag}
+            onChange={(event) => setTag(event.target.value)}
+            className="w-full border rounded-lg px-4 py-2"
+          >
+            {TAGS.map((value) => (
+              <option key={value} value={value}>
+                {value}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <button
+          type="submit"
+          disabled={uploading}
+          className="bg-black text-white px-5 py-2 rounded-lg disabled:opacity-50"
+        >
+          {uploading ? "Uploading..." : "Upload Photo"}
+        </button>
+
+        {message && <p role="status" className="text-sm">{message}</p>}
+      </form>
     </div>
   );
 }

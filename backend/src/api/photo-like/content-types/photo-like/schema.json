@@ -1,0 +1,34 @@
+{
+  "kind": "collectionType",
+  "collectionName": "photo_likes",
+  "info": {
+    "singularName": "photo-like",
+    "pluralName": "photo-likes",
+    "displayName": "Photo Likes"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "useJoinTable": false
+    },
+    "photo": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::photo.photo",
+      "useJoinTable": false
+    }
+  },
+  "indexes": [
+    {
+      "name": "photo_likes_user_photo_unique",
+      "columns": ["user_id", "photo_id"],
+      "type": "unique"
+    }
+  ]
+}

@@ -13,8 +13,8 @@
   "attributes": {
     "EventId": {
       "type": "string",
-      "unique": true,
-      "required": true
+      "required": true,
+      "unique": true
     },
     "Title": {
       "type": "string",
@@ -42,8 +42,8 @@
     },
     "isPClubEvent": {
       "type": "boolean",
-      "default": false,
-      "required": true
+      "required": true,
+      "default": false
     },
     "buttonLink": {
       "type": "string",
@@ -53,15 +53,14 @@
       "type": "string",
       "required": false
     },
-    "thumbnailColor": {
-      "type": "string",
-      "required": false
-    },
-    "photos": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::photo.photo",
-      "mappedBy": "event"
+    "thumbnailPic": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files"
+      ]
     }
   }
 }

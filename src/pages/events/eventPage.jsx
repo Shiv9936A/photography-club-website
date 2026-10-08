@@ -7,138 +7,70 @@ import MarkdownPreview from "@uiw/react-markdown-preview";
 import noiseImage from "../../assets/images/noise.png";
 import { ArrowLeft } from "lucide-react";
 import { GrLocation } from "react-icons/gr";
-import { MdEvent, MdDownload } from "react-icons/md";
+import { MdDownload, MdEvent } from "react-icons/md";
 import { formatDateTime, getDifference } from "../../utils/dateHelpers";
 import { navigateSmooth } from "../../utils/helperFunctions";
 import { saveAs } from "file-saver";
-import {
-  getEventPublicPhotos,
-  getEventPrivatePhotos,
-} from "../../components/util/postApi";
-
-// const eventImages = [
-//     { src: "/photo-1.jpg", name: "event1.jpg" },
-//     { src: "/photo-1.jpg", name: "event2.jpg" },
-//     { src: "/photo-1.jpg", name: "event3.jpg" },
-//     { src: "/photo-1.jpg", name: "event4.jpg" },
-//     { src: "/photo-1.jpg", name: "event5.jpg" }
-
-// ];
+import { API_URL } from "../../components/util/api";
+import { canUploadPhoto, getPhotoUploadSession } from "../../components/photoReels/photoUploadAccess";
 
 function EventPage() {
   const { id } = useParams();
 
   const navigate = useNavigate();
   const location = useLocation();
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [eventImages, setEventImages] = useState([]);
   const [eventData, setEventData] = useState(null);
-  const token = localStorage.getItem("authToken");
-
-  let user = null;
-
-  try {
-    if (token) {
-      user = JSON.parse(atob(token.split(".")[1]));
-    }
-  } catch (err) {
-    console.error("Invalid token");
-  }
-
-  console.log("CURRENT USER FROM JWT:", user);
-
-  // const canManageEvent =
-  //   user?.appRole === "admin" || user?.appRole === "sig-coordinator";
-  const canManageEvent =
-    user?.role === "admin" || user?.role === "sig-coordinator";
+  const [eventImages, setEventImages] = useState([]);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const session = getPhotoUploadSession();
+  const canManageEvent = canUploadPhoto(session);
 
   useEffect(() => {
-    const fetchGallery = async () => {
+    const fetchEvent = async () => {
       try {
-        // Get all events
         const eventsRes = await axios.get("http://localhost:1337/api/events");
-
         const events = eventsRes.data.data || [];
-
-        // URL /events/1 -> EventId "1"
         const currentEvent = events.find(
           (event) => String(event.EventId) === String(id),
         );
 
-        if (!currentEvent) {
-          console.error("Event not found:", id);
-
+        setEventData(currentEvent || null);
+        if (!currentEvent?.documentId) {
           setEventImages([]);
           return;
         }
 
-        setEventData(currentEvent);
-
-        const eventDocumentId = currentEvent.documentId;
-
-        console.log("EVENT ROUTE ID:", id);
-
-        console.log("EVENT DOCUMENT ID:", eventDocumentId);
-
-        // PUBLIC
         const publicRes = await axios.get(
-          `http://localhost:1337/api/gallery/public?event=${eventDocumentId}`,
+          `${API_URL}/api/gallery/public?event=${encodeURIComponent(currentEvent.documentId)}`,
         );
-
-        const publicPhotos = publicRes.data.photos || [];
-
-        console.log("EVENT PUBLIC PHOTOS:", publicPhotos);
-
-        let photos = [...publicPhotos];
-
-        // PRIVATE — only NITK users
+        let photos = publicRes.data.photos || [];
         const token = localStorage.getItem("authToken");
-
         if (token) {
           try {
             const privateRes = await axios.get(
-              `http://localhost:1337/api/gallery/private?event=${eventDocumentId}`,
-              {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
-              },
+              `${API_URL}/api/gallery/private?event=${encodeURIComponent(currentEvent.documentId)}`,
+              { headers: { Authorization: `Bearer ${token}` } },
             );
-
-            const privatePhotos = privateRes.data.photos || [];
-
-            console.log("EVENT PRIVATE PHOTOS:", privatePhotos);
-
-            photos = [...photos, ...privatePhotos];
+            photos = photos.concat(privateRes.data.photos || []);
           } catch (error) {
-            console.log("Private photos unavailable:", error.response?.status);
+            // Private photos are optional for visitors and non-NITK users.
           }
         }
-
-        // Remove duplicates
         const uniquePhotos = Array.from(
-          new Map(photos.map((photo) => [photo.documentId, photo])).values(),
+          new Map(photos.map((photo) => [photo.documentId || photo.id, photo])).values(),
         );
-
-        const formattedPhotos = uniquePhotos.map((photo) => ({
-          src: photo.image?.url
-            ? `http://localhost:1337${photo.image.url}`
-            : "",
-
-          name: photo.image?.name || photo.title || "event-photo.jpg",
-        }));
-
-        setEventImages(formattedPhotos);
+        setEventImages(uniquePhotos.filter((photo) => photo.image?.url).map((photo) => ({
+          src: photo.image.url.startsWith("http") ? photo.image.url : `${API_URL}${photo.image.url}`,
+          name: photo.image.name || photo.title || "event-photo.jpg",
+        })));
       } catch (error) {
-        console.error("Failed to load event gallery:", error);
-
-        setEventImages([]);
+        console.error("Failed to load event:", error);
+        setEventData(null);
       }
     };
 
-    fetchGallery();
+    fetchEvent();
   }, [id]);
-
   // Determine if user came from home page
   const isFromHome = location.state?.from === "home";
   const path = isFromHome ? "/" : "/events";
@@ -149,9 +81,7 @@ function EventPage() {
     if (scrollPositionY) sessionStorage.removeItem("scrollPositionY");
   };
 
-  const downloadImage = (url, name) => {
-    saveAs(url, name);
-  };
+  const downloadImage = (url, name) => saveAs(url, name);
 
   return (
     <div className="max-w-container md:max-w-[80%] lg:max-w-[60%] mx-auto px-4 py-8">
@@ -272,55 +202,31 @@ function EventPage() {
         </p>
       </div>
 
-      {/* Gallery Section */}
       <hr className="border-t-3 border-secondary my-10" />
-
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold">
-          Captured Moments from NITK Events
-        </h2>
-
+        <h2 className="text-2xl font-bold">Captured Moments from NITK Events</h2>
         {canManageEvent && (
-          <button
-            onClick={() => navigate(`/events/${id}/upload`)}
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-red-400"
-          >
+          <button onClick={() => navigate(`/events/${id}/upload`)} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-red-400">
             Add Photos
           </button>
         )}
       </div>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {eventImages.map((image, index) => (
-          <div key={index} className="relative group">
-            <img
-              src={image.src}
-              alt={`Event ${index + 1}`}
-              className="w-full h-40 object-cover rounded-lg cursor-pointer"
-              onClick={() => setSelectedImage(image.src)}
-            />
-            <button
-              onClick={() => downloadImage(image.src, image.name)}
-              className="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white p-2 rounded-full opacity-100 lg:opacity-0 md:group-hover:opacity-100 transition"
-            >
+          <div key={`${image.src}-${index}`} className="relative group">
+            <img src={image.src} alt={`Event ${index + 1}`} className="w-full h-40 object-cover rounded-lg cursor-pointer" onClick={() => setSelectedImage(image.src)} />
+            <button onClick={() => downloadImage(image.src, image.name)} className="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white p-2 rounded-full opacity-100 lg:opacity-0 md:group-hover:opacity-100 transition">
               <MdDownload size={20} />
             </button>
           </div>
         ))}
       </div>
-
-      {/* Image Modal */}
       {selectedImage && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50"
-          onClick={() => setSelectedImage(null)}
-        >
-          <img
-            src={selectedImage}
-            alt="Enlarged event"
-            className="max-w-[90%] max-h-[80%] rounded-lg"
-          />
+        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50" onClick={() => setSelectedImage(null)}>
+          <img src={selectedImage} alt="Enlarged event" className="max-w-[90%] max-h-[80%] rounded-lg" />
         </div>
       )}
+
     </div>
   );
 }

@@ -5,81 +5,21 @@
 module.exports = {
   async publicPhotos(ctx) {
     try {
-      const strapi = global.strapi;
-
       const { event } = ctx.query;
-
-      if (!event) {
-        return ctx.badRequest("Event documentId is required");
-      }
-
-      /*
-       * Find event using documentId.
-       */
+      if (!event) return ctx.badRequest("Event documentId is required");
       const eventEntry = await strapi.db.query("api::event.event").findOne({
-        where: {
-          documentId: event,
-        },
-        select: ["id", "documentId", "EventName"],
+        where: { documentId: event },
+        select: ["id", "documentId"],
       });
+      if (!eventEntry) return ctx.send({ success: true, photos: [] });
 
-      if (!eventEntry) {
-        console.log("PUBLIC: Event not found:", event);
-
-        return ctx.send({
-          success: true,
-          photos: [],
-        });
-      }
-
-      console.log(
-        "PUBLIC EVENT:",
-        eventEntry.documentId,
-        eventEntry.EventName,
-        "DB ID:",
-        eventEntry.id,
-      );
-
-      /*
-       * Find PUBLIC photos belonging to THIS event.
-       */
-      const photos = await strapi.db.query("api::photo.photo").findMany({
-        where: {
-          visibility: "public",
-          event: eventEntry.id,
-        },
-
-        populate: {
-          image: true,
-          event: true,
-        },
-
-        orderBy: {
-          displayOrder: "asc",
-        },
-
-        limit: 10,
+      const photos = await strapi.db.query("api::event-gallery-photo.event-gallery-photo").findMany({
+        where: { visibility: "public", event: eventEntry.id },
+        populate: { image: true, event: true },
       });
-
-      console.log(
-        "PUBLIC EVENT PHOTOS:",
-        photos.map((photo) => ({
-          id: photo.id,
-          documentId: photo.documentId,
-          title: photo.title,
-          visibility: photo.visibility,
-          eventId: photo.event?.id,
-          eventDocumentId: photo.event?.documentId,
-        })),
-      );
-
-      return ctx.send({
-        success: true,
-        photos,
-      });
+      return ctx.send({ success: true, photos });
     } catch (error) {
-      console.error("Public gallery error:", error);
-
+      console.error("Public event gallery error:", error);
       return ctx.internalServerError("Failed to load public gallery");
     }
   },
@@ -102,30 +42,38 @@ module.exports = {
   async uploadPhoto(ctx) {
     try {
       const strapi = global.strapi;
+      const user = ctx.state.user;
 
-      const { title, tag, visibility, capturedBy } = ctx.request.body;
+      if (!user) {
+        return ctx.unauthorized("Authentication required");
+      }
 
+      const body = ctx.request.body || {};
       const file = ctx.request.files?.files;
 
       if (!file) {
         return ctx.badRequest("No image uploaded");
       }
 
-      if (!capturedBy) {
-        return ctx.badRequest("Photographer is required");
+      if (Array.isArray(file)) {
+        return ctx.badRequest("Upload one image at a time");
       }
 
-      // Check photographer exists
-      const photographer = await strapi.db
-        .query("plugin::users-permissions.user")
-        .findOne({
-          where: {
-            id: Number(capturedBy),
-          },
-        });
+      const photoModel = strapi.getModel("api::photo.photo");
+      const visibility = body.visibility || "public";
+      const tag = body.tag || "Other";
+      const capturedDate = body.capturedDate || null;
 
-      if (!photographer) {
-        return ctx.badRequest("Photographer not found");
+      if (!["public", "private"].includes(visibility)) {
+        return ctx.badRequest("Invalid visibility");
+      }
+
+      if (!photoModel.attributes.tag.enum.includes(tag)) {
+        return ctx.badRequest("Invalid photo tag");
+      }
+
+      if (capturedDate && Number.isNaN(Date.parse(capturedDate))) {
+        return ctx.badRequest("Invalid captured date");
       }
 
       // Upload image to Strapi Media Library
@@ -136,19 +84,30 @@ module.exports = {
 
       const image = uploaded[0];
 
-      // Create photo record
-      const photo = await strapi.db.query("api::photo.photo").create({
-        data: {
-          title: title || image.name,
-          tag: tag || "Other",
-          visibility: visibility || "public",
-          image: image.id,
-          capturedBy: photographer.id,
-        },
+      // Create a published Strapi 5 document so it is available in the API and Content Manager.
+      const data = {
+        title: body.title?.trim() || image.name,
+        tag,
+        visibility,
+        capturedDate,
+        image: image.id,
+        uploadedBy: { connect: [user.documentId] },
+        capturedBy: { connect: [user.documentId] },
+        likesCount: 0,
+      };
 
+      const photo = await strapi.documents("api::photo.photo").create({
+        status: "published",
+        data: {
+          ...data,
+        },
         populate: {
           image: true,
-          capturedBy: true,
+          capturedBy: {
+            fields: ["username", "googlePicture"],
+            populate: { avatar: true },
+          },
+          uploadedBy: { fields: ["username"] },
         },
       });
 
@@ -162,181 +121,96 @@ module.exports = {
       return ctx.internalServerError("Failed to upload photo");
     }
   },
+  async privatePhotos(ctx) {
+    try {
+      const strapi = global.strapi;
+      const user = ctx.state.user;
+      if (!user) return ctx.unauthorized("Authentication required");
+      if (user.isNitk !== true) return ctx.forbidden("NITK users only");
+
+      const { event } = ctx.query;
+      let eventEntry = null;
+      if (event) {
+        eventEntry = await strapi.db.query("api::event.event").findOne({
+          where: { documentId: event },
+          select: ["id", "documentId"],
+        });
+        if (!eventEntry) return ctx.send({ success: true, photos: [] });
+      }
+
+      const photos = await strapi.db
+        .query(eventEntry ? "api::event-gallery-photo.event-gallery-photo" : "api::photo.photo")
+        .findMany({
+        where: eventEntry
+          ? { visibility: "private", event: eventEntry.id }
+          : { visibility: "private" },
+        populate: {
+          image: true,
+          ...(eventEntry ? { event: true } : {}),
+          ...(!eventEntry
+            ? {
+                capturedBy: {
+                  fields: ["username", "googlePicture"],
+                  populate: { avatar: true },
+                },
+                uploadedBy: true,
+              }
+            : { uploadedBy: true }),
+        },
+        orderBy: { createdAt: "desc" },
+      });
+
+      return ctx.send({ success: true, photos });
+    } catch (error) {
+      console.error("Private gallery error:", error);
+      return ctx.internalServerError("Failed to load private gallery");
+    }
+  },
 
   async uploadEventPhotos(ctx) {
     try {
       const strapi = global.strapi;
-
-      const { event, visibility, title } = ctx.request.body;
-
-      if (!event) {
-        return ctx.badRequest("Event documentId is required");
-      }
-
+      const body = ctx.request.body || {};
+      const eventDocumentId = body.event;
+      const { visibility, title } = body;
+      const files = ctx.request.files?.files;
+      if (!eventDocumentId) return ctx.badRequest("Event documentId is required");
       if (!["public", "private"].includes(visibility)) {
         return ctx.badRequest("Invalid visibility");
       }
+      if (!files) return ctx.badRequest("No image uploaded");
 
-      const files = ctx.request.files?.files;
-
-      if (!files) {
-        return ctx.badRequest("No image uploaded");
-      }
-
-      // Find event
       const eventEntry = await strapi.db.query("api::event.event").findOne({
-        where: {
-          documentId: event,
-        },
+        where: { documentId: eventDocumentId },
+        select: ["id", "documentId"],
       });
+      if (!eventEntry) return ctx.notFound("Event not found");
 
-      if (!eventEntry) {
-        return ctx.notFound("Event not found");
-      }
-
-      // Normalize single/multiple files
-      const fileList = Array.isArray(files) ? files : [files];
-
-      const uploadedPhotos = [];
-
-      for (const file of fileList) {
-        // Upload image to Strapi media library
-        const uploaded = await strapi
-          .plugin("upload")
-          .service("upload")
-          .upload({
-            data: {},
-            files: file,
-          });
-
+      const createdPhotos = [];
+      for (const file of Array.isArray(files) ? files : [files]) {
+        const uploaded = await strapi.plugin("upload").service("upload").upload({
+          data: {},
+          files: file,
+        });
         const image = uploaded[0];
-
-        // Create photo record linked to THIS event
-        const photo = await strapi.db.query("api::photo.photo").create({
+        const photo = await strapi.documents("api::event-gallery-photo.event-gallery-photo").create({
+          status: "published",
           data: {
-            title: title || image.name,
+            title: typeof title === "string" && title.trim() ? title.trim() : image.name,
             visibility,
-            event: eventEntry.id,
+            event: { connect: [eventEntry.documentId] },
+            uploadedBy: { connect: [ctx.state.user.documentId] },
             image: image.id,
-            displayOrder: 0,
           },
-          populate: {
-            image: true,
-            event: true,
-          },
+          populate: { image: true, event: true },
         });
-
-        uploadedPhotos.push(photo);
+        createdPhotos.push(photo);
       }
 
-      return ctx.send({
-        success: true,
-        photos: uploadedPhotos,
-      });
+      return ctx.send({ success: true, photos: createdPhotos });
     } catch (error) {
-      console.error("EVENT PHOTO UPLOAD ERROR:", error);
-
+      console.error("Event photo upload error:", error);
       return ctx.internalServerError("Failed to upload event photos");
-    }
-  },
-
-  async privatePhotos(ctx) {
-    try {
-      const strapi = global.strapi;
-
-      const user = ctx.state.user;
-
-      console.log(
-        "PRIVATE GALLERY USER:",
-        user
-          ? {
-              id: user.id,
-              email: user.email,
-              isNitk: user.isNitk,
-            }
-          : null,
-      );
-
-      if (!user) {
-        return ctx.unauthorized("Authentication required");
-      }
-
-      if (user.isNitk !== true) {
-        return ctx.forbidden("NITK users only");
-      }
-
-      const { event } = ctx.query;
-
-      if (!event) {
-        return ctx.badRequest("Event documentId is required");
-      }
-
-      /*
-       * Find event using documentId.
-       */
-      const eventEntry = await strapi.db.query("api::event.event").findOne({
-        where: {
-          documentId: event,
-        },
-        select: ["id", "documentId", "EventName"],
-      });
-
-      if (!eventEntry) {
-        console.log("PRIVATE: Event not found:", event);
-
-        return ctx.send({
-          success: true,
-          photos: [],
-        });
-      }
-
-      console.log(
-        "PRIVATE EVENT:",
-        eventEntry.documentId,
-        eventEntry.EventName,
-        "DB ID:",
-        eventEntry.id,
-      );
-
-      /*
-       * Find PRIVATE photos belonging to THIS event.
-       */
-      const photos = await strapi.db.query("api::photo.photo").findMany({
-        where: {
-          visibility: "private",
-          event: eventEntry.id,
-        },
-
-        populate: {
-          image: true,
-          event: true,
-        },
-
-        orderBy: {
-          displayOrder: "asc",
-        },
-      });
-
-      console.log(
-        "PRIVATE EVENT PHOTOS:",
-        photos.map((photo) => ({
-          id: photo.id,
-          documentId: photo.documentId,
-          title: photo.title,
-          visibility: photo.visibility,
-          eventId: photo.event?.id,
-          eventDocumentId: photo.event?.documentId,
-        })),
-      );
-
-      return ctx.send({
-        success: true,
-        photos,
-      });
-    } catch (error) {
-      console.error("Private gallery error:", error);
-
-      return ctx.internalServerError("Failed to load private gallery");
     }
   },
 };

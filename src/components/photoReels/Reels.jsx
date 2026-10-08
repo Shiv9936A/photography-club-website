@@ -125,8 +125,15 @@ const Reels = () => {
                   />
                 </div>
                 <div>
-                  <h3 className="font-medium text-sm">{reel.photographer}</h3>
-                  <p className="text-gray-500 text-xs">{reel.location}</p>
+                  <h3 className="font-semibold text-sm">{reel.title}</h3>
+
+                  <p className="text-gray-500 text-xs mt-1">
+                    Captured by: {reel.photographer}
+                  </p>
+
+                  <p className="text-gray-400 text-xs mt-0.5">
+                    {reel.category || "Others"}
+                  </p>
                 </div>
               </div>
               <Button
@@ -180,7 +187,7 @@ const Reels = () => {
               </div>
               <div>
                 <p className="font-medium text-sm">
-                  {(reel.likesCount ?? reel.likes) ?? 0} likes
+                  {reel.likesCount ?? reel.likes ?? 0} likes
                 </p>
                 <h2 className="font-medium mt-1">{reel.title}</h2>
                 <p className="text-sm text-gray-600 mt-1">{reel.description}</p>
@@ -290,7 +297,7 @@ const Reels = () => {
                 </div>
                 <div>
                   <span className="font-medium">Likes:</span>
-                  {(selectedReel.likesCount ?? selectedReel.likes) ?? 0}
+                  {selectedReel.likesCount ?? selectedReel.likes ?? 0}
                 </div>
               </div>
             </div>

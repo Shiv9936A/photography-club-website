@@ -1,9 +1,58 @@
-'use strict';
+"use strict";
 
-/**
- * event router
- */
+const { createCoreRouter } =
+  require("@strapi/strapi").factories;
 
-const { createCoreRouter } = require('@strapi/strapi').factories;
+module.exports = createCoreRouter(
+  "api::event.event",
+  {
+    config: {
+      find: {
+        auth: false,
+      },
 
-module.exports = createCoreRouter('api::event.event');
+      findOne: {
+        auth: false,
+      },
+
+      create: {
+        auth: false,
+        policies: [
+          "global::verify-node-jwt",
+          {
+            name: "global::require-role",
+            config: {
+              roles: ["admin", "sig-coordinator"],
+            },
+          },
+        ],
+      },
+
+      update: {
+        auth: false,
+        policies: [
+          "global::verify-node-jwt",
+          {
+            name: "global::require-role",
+            config: {
+              roles: ["admin", "sig-coordinator"],
+            },
+          },
+        ],
+      },
+
+      delete: {
+        auth: false,
+        policies: [
+          "global::verify-node-jwt",
+          {
+            name: "global::require-role",
+            config: {
+              roles: ["admin", "sig-coordinator"],
+            },
+          },
+        ],
+      },
+    },
+  }
+);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Search, X } from 'lucide-react';
-import { TabContext } from '../../context/TabContext';
+import { TabContext } from '../../pages/context/TabContext';
 
 const SearchBar = ({ placeholder = "Search..." }) => {
   const [searchTerm, setSearchTerm] = useState('');

@@ -1,46 +1,59 @@
 import axios from "axios";
 
-const strapiClient = axios.create({
-    baseURL: process.env.STRAPI_URL || "http://localhost:1337",
-    timeout: 10000,
-    headers: {
-        "Content-Type": "application/json",
-        "x-auth-sync-secret": process.env.AUTH_SYNC_SECRET,
-    },
-});
+const STRAPI_URL =
+  process.env.STRAPI_URL || "http://localhost:1337";
 
-export const resolveOrCreateUser = async ({ googleId, email, name, picture }) => {
-    const { data } = await strapiClient.post("/api/internal/auth/resolve-user", {
+/**
+ * Sync Google user with Strapi
+ *
+ * @param {{
+ *   googleId: string,
+ *   email: string,
+ *   name?: string,
+ *   picture?: string,
+ *   isNitk: boolean
+ * }} user
+ */
+export const syncGoogleUser = async ({
+  googleId,
+  email,
+  name,
+  picture,
+  isNitk,
+}) => {
+  try {
+    const response = await axios.post(
+      `${STRAPI_URL}/api/auth-sync/user`,
+      {
         googleId,
         email,
         name,
         picture,
-    });
-
-    return data?.data ?? null;
-};
-
-export const getUserById = async (id) => {
-    const { data } = await strapiClient.get(`/api/internal/auth/users/${id}`);
-    return data?.data ?? null;
-};
-
-export const fetchGalleryPosts = async ({ kind, access = "public" }) => {
-    const { data } = await strapiClient.get(`/api/posts/${kind}`, {
-        params: {
-            access,
+        isNitk,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "x-auth-sync-secret":
+            process.env.AUTH_SYNC_SECRET,
         },
-    });
+      }
+    );
 
-    return data?.data ?? [];
-};
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error(
+        "Strapi user sync failed:",
+        error.response?.data || error.message
+      );
+    } else {
+      console.error(
+        "Strapi user sync failed:",
+        error
+      );
+    }
 
-export const fetchEvents = async ({ access = "public" } = {}) => {
-    const { data } = await strapiClient.get("/api/events", {
-        params: {
-            access,
-        },
-    });
-
-    return data?.data ?? [];
+    throw error;
+  }
 };

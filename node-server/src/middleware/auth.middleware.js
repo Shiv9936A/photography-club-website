@@ -25,106 +25,46 @@ const loadCurrentUser = async (req) => {
 };
 
 export const verifyJWT = (req, res, next) => {
-    try {
-        const authHeader = req.headers.authorization;
+  try {
+    // 1. Get Authorization header
+    const authHeader = req.headers.authorization;
 
-        if (!authHeader || !authHeader.startsWith("Bearer ")) {
-            return sendAuthError(res, 401, "Missing bearer token");
-        }
-
-        const token = authHeader.split(" ")[1];
-
-        try {
-            req.user = verifyToken(token);
-            return next();
-        } catch (err) {
-            if (err?.name === "TokenExpiredError") {
-                return sendAuthError(res, 401, "Expired token");
-            }
-
-            return sendAuthError(res, 401, "Invalid token");
-        }
-    } catch {
-        return sendAuthError(res, 401, "Invalid token");
+    if (!authHeader) {
+      return res.status(401).json({
+        success: false,
+        message: "Authorization token is required",
+      });
     }
-};
 
-export const optionalJWT = async (req, res, next) => {
-    try {
-        const authHeader = req.headers.authorization;
-
-        if (!authHeader) {
-            return next();
-        }
-
-        if (!authHeader.startsWith("Bearer ")) {
-            return sendAuthError(res, 401, "Invalid token");
-        }
-
-        const token = authHeader.split(" ")[1];
-        req.user = verifyToken(token);
-
-        const user = await loadCurrentUser(req);
-        if (user) {
-            req.currentUser = user;
-        }
-
-        return next();
-    } catch (err) {
-        if (err?.name === "TokenExpiredError") {
-            return sendAuthError(res, 401, "Expired token");
-        }
-
-        return sendAuthError(res, 401, "Invalid token");
+    // 2. Check Bearer format
+    if (!authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid authorization format",
+      });
     }
-};
 
-export const attachCurrentUser = async (req, res, next) => {
-    try {
-        const user = await loadCurrentUser(req);
+    // 3. Extract JWT
+    const token = authHeader.split(" ")[1];
 
-        if (!user) {
-            return sendAuthError(res, 401, "Account not found");
-        }
-
-        return next();
-    } catch {
-        return sendAuthError(res, 500, "Unable to load current user");
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: "JWT token is missing",
+      });
     }
-};
 
-export const requireRole = (allowedRoles = []) => async (req, res, next) => {
-    try {
-        const user = await loadCurrentUser(req);
+    const decoded = verifyToken(token);
 
-        if (!user) {
-            return sendAuthError(res, 401, "Account not found");
-        }
+    req.user = decoded;
 
-        if (!allowedRoles.includes(user.role)) {
-            return sendAuthError(res, 403, "Insufficient role");
-        }
+    next();
+  } catch (error) {
+    console.error("JWT verification failed:", error.message);
 
-        return next();
-    } catch {
-        return sendAuthError(res, 500, "Unable to validate role");
-    }
-};
-
-export const requireNitkStudent = async (req, res, next) => {
-    try {
-        const user = await loadCurrentUser(req);
-
-        if (!user) {
-            return sendAuthError(res, 401, "Account not found");
-        }
-
-        if (!user.isNitk) {
-            return sendAuthError(res, 403, "Non-NITK email");
-        }
-
-        return next();
-    } catch {
-        return sendAuthError(res, 500, "Unable to validate NITK access");
-    }
+    return res.status(401).json({
+      success: false,
+      message: "Invalid or expired token",
+    });
+  }
 };

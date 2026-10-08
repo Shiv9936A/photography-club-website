@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { TeamMember } from "./team_member";
-import { TabContext } from "../../context/TabContext";
+import { TabContext } from "../../pages/context/TabContext";
 import { useNavigate } from "react-router-dom";
 import { navigateSmooth } from "../../utils/helperFunctions";
 

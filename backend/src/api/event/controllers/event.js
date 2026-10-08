@@ -1,9 +1,7 @@
-'use strict';
+// @ts-nocheck
 
-/**
- * event controller
- */
+"use strict";
 
-const { createCoreController } = require('@strapi/strapi').factories;
+const { createCoreController } = require("@strapi/strapi").factories;
 
-module.exports = createCoreController('api::event.event');
+module.exports = createCoreController("api::event.event");

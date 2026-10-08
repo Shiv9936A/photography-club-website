@@ -78,9 +78,7 @@
     "avatar": {
       "type": "media",
       "multiple": false,
-      "allowedTypes": [
-        "images"
-      ]
+      "allowedTypes": ["images"]
     },
     "name": {
       "type": "string",
@@ -90,22 +88,22 @@
       "type": "string",
       "unique": true
     },
-    "picture": {
+    "googlePicture": {
       "type": "string"
     },
-    "appRole": {
-      "type": "enumeration",
-      "enum": [
-        "user",
-        "member",
-        "admin"
-      ],
-      "default": "user"
-    },
     "isNitk": {
-      "type": "boolean",
-      "default": false
-    },
+  "type": "boolean",
+  "default": false
+},
+"appRole": {
+  "type": "enumeration",
+  "enum": [
+    "user",
+    "club-member",
+    "admin"
+  ],
+  "default": "user"
+},
     "photographerRole": {
       "type": "string"
     },

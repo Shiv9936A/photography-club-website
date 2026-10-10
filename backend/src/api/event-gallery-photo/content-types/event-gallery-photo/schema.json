@@ -1,0 +1,43 @@
+{
+  "kind": "collectionType",
+  "collectionName": "event_gallery_photos",
+  "info": {
+    "singularName": "event-gallery-photo",
+    "pluralName": "event-gallery-photos",
+    "displayName": "Event Gallery Photo"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": ["images"]
+    },
+    "visibility": {
+      "type": "enumeration",
+      "enum": ["public", "private"],
+      "default": "public",
+      "required": true
+    },
+    "event": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::event.event"
+    },
+    "uploadedBy": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "capturedDate": {
+      "type": "date"
+    }
+  }
+}

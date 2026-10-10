@@ -1,0 +1,87 @@
+{
+  "kind": "collectionType",
+  "collectionName": "events",
+  "info": {
+    "singularName": "event",
+    "pluralName": "events",
+    "displayName": "Events"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "EventId": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "Title": {
+      "type": "string",
+      "required": true
+    },
+    "EventName": {
+      "type": "string",
+      "required": true
+    },
+    "description": {
+      "type": "text",
+      "required": true
+    },
+    "location": {
+      "type": "string",
+      "required": true
+    },
+    "locationLink": {
+      "type": "string",
+      "required": false
+    },
+    "dateTime": {
+      "type": "datetime",
+      "required": true
+    },
+    "isPClubEvent": {
+      "type": "boolean",
+      "required": true,
+      "default": false
+    },
+    "buttonLink": {
+      "type": "string",
+      "required": false
+    },
+    "buttonColor": {
+  "type": "string",
+  "required": false
+},
+"thumbnailColor": {
+  "type": "string",
+  "required": false
+},
+
+"objectives": {
+  "type": "json",
+  "required": false
+},
+"highlights": {
+  "type": "json",
+  "required": false
+},
+"portfolioLink": {
+  "type": "string",
+  "required": false
+},
+"contactPerson": {
+  "type": "string",
+  "required": false
+},
+    "thumbnailPic": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files"
+      ]
+    }
+  }
+}

@@ -1,6 +1,16 @@
 import axios from "axios";
 import { API_URL } from "./api";
 
+
+const getMediaUrl = (url) => {
+  if (!url) return "";
+
+  if (/^https?:\/\//i.test(url)) {
+    return url;
+  }
+  return `${API_URL.replace(/\/$/, "")}/${url.replace(/^\//, "")}`;
+};
+
 const mapPhoto = (photo) => {
   const capturedByAvatar =
     photo.capturedBy?.avatar?.url || photo.capturedBy?.googlePicture || "";
@@ -11,9 +21,11 @@ const mapPhoto = (photo) => {
 
     title: photo.title || "",
 
-    img: photo.image?.url ? API_URL + photo.image.url : "",
+    img: getMediaUrl(photo.image?.url),
 
-    images: photo.image?.url ? [API_URL + photo.image.url] : [],
+    images: photo.image?.url
+      ? [getMediaUrl(photo.image.url)]
+      : [],
 
     description: "",
     likes: photo.likesCount || 0,
@@ -23,11 +35,12 @@ const mapPhoto = (photo) => {
     photographer:
       photo.capturedBy?.username || photo.uploadedBy?.username || "Unknown",
 
-    photographerAvatar: capturedByAvatar
-      ? capturedByAvatar.startsWith("http")
-        ? capturedByAvatar
-        : API_URL + capturedByAvatar
-      : "",
+    photographerAvatar: getMediaUrl(
+      photo.capturedBy?.avatar?.url ||
+      photo.capturedBy?.googlePicture ||
+      photo.uploadedBy?.avatar?.url ||
+      ""
+    ),
     location: "",
     date: photo.capturedDate || photo.createdAt,
 
@@ -107,10 +120,11 @@ export const getReels = async () => {
 
     title: post.title || "Untitled",
 
-    img: post.images?.length ? API_URL + post.images[0].url : "",
+    img: post.images?.length
+      ? getMediaUrl(post.images[0]?.url)
+      : "",
 
-    images: post.images?.map((img) => API_URL + img.url) || [],
-
+    images: post.images?.map((img) => getMediaUrl(img.url)) || [],
     description: post.description || "",
 
     likes: post.likesCount || 0,
@@ -120,9 +134,7 @@ export const getReels = async () => {
 
     photographer: post.photographer || "Unknown",
 
-    photographerAvatar: post.photographerAvatar?.url
-      ? API_URL + post.photographerAvatar.url
-      : "",
+    photographerAvatar: getMediaUrl(post.photographerAvatar?.url),
 
     location: post.location || "",
 

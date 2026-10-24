@@ -48,7 +48,7 @@ const AuthTest = () => {
 
     try {
       const { data } = await axios.post(
-        "http://localhost:5000/api/auth/google",
+        "https://photo-features-zop6.onrender.com/api/auth/google",
         {
           token: credentialResponse.credential,
         },
@@ -75,11 +75,11 @@ const AuthTest = () => {
   };
 
   const handleLogout = () => {
-  localStorage.removeItem("authToken");
-  localStorage.removeItem("authUser");
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("authUser");
 
-  setUser(null);
-};
+    setUser(null);
+  };
   return (
     <>
       {/* =========================

@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:1337";
+const API_URL = "https://photo-features-strapi.onrender.com";
 
 
 export { API_URL };

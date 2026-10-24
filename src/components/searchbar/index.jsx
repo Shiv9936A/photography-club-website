@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { Search, X } from 'lucide-react';
-import { TabContext } from '../../pages/context/TabContext';
+import React, { useState, useEffect, useContext } from "react";
+import { Search, X } from "lucide-react";
+import { TabContext } from "../../pages/context/TabContext";
 
 const SearchBar = ({ placeholder = "Search..." }) => {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const { searchQuery, setSearchQuery } = useContext(TabContext);
 
   useEffect(() => {
@@ -15,21 +15,18 @@ const SearchBar = ({ placeholder = "Search..." }) => {
   }, [searchTerm, setSearchQuery]);
 
   const clearSearch = () => {
-    setSearchTerm('');
-    setSearchQuery('');
+    setSearchTerm("");
+    setSearchQuery("");
   };
 
   return (
     <div className="flex justify-center items-center w-full p-6">
-      <form 
+      <form
         onSubmit={(e) => e.preventDefault()} // Prevents default form submission
         className="w-full max-w-2xl"
       >
         <div className="relative flex items-center">
-          <Search 
-            className="absolute left-4 text-gray-400"
-            size={20}
-          />
+          <Search className="absolute left-4 text-gray-400" size={20} />
           <input
             type="text"
             value={searchTerm}

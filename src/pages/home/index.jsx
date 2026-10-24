@@ -1,17 +1,18 @@
 import { useNavigate } from "react-router";
-import Landing from "./landing"
-import About from "./about"
-import Hero from "./hero"
-import ClubUpdates from "./clubUpdates"
-import photo1 from '../../assets/images/placeholder-images/photography1.png'
-import photo2 from '../../assets/images/placeholder-images/photography2.png'
-import {useEffect,useState} from "react";
+import Landing from "./landing";
+import About from "./about";
+import Hero from "./hero";
+import ClubUpdates from "./clubUpdates";
+import photo1 from "../../assets/images/placeholder-images/photography1.png";
+import photo2 from "../../assets/images/placeholder-images/photography2.png";
+import { useEffect, useState } from "react";
 import axios from "axios";
+import { getEvents as fetchEvents } from "../../services/eventsService";
 
 export default function HomePage() {
   const [events, setEvents] = useState([]);
   const [photos, setPhotos] = useState([]);
-
+  let navigate = useNavigate();
 
   const specialNotices = ["Recruitment for 2028 batch has begun."];
   const onJoin = (e) => {
@@ -22,73 +23,91 @@ export default function HomePage() {
 
   const learnMore = (e) => {
     e.preventDefault();
-    console.log("Learn more button clicked");
+    navigate("/about");
+
     // redirect to the learn more page
   };
 
-  const getEvents = async () => {
-    try {
-      const token = localStorage.getItem("authToken");
+  // const getEvents = async () => {
+  //   try {
+  //     const token = localStorage.getItem("authToken");
 
-      // Events are protected
-      if (!token) {
-        console.log("No authentication token. Events are protected.");
-        setEvents([]);
-        return;
-      }
+  //     // Events are protected
+  //     if (!token) {
+  //       console.log("No authentication token. Events are protected.");
+  //       setEvents([]);
+  //       return;
+  //     }
 
-      const res = await axios.get("http://localhost:1337/api/events", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+  //     const res = await axios.get("http://localhost:1337/api/events", {
+  //       headers: {
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //     });
 
-      console.log("Events response:", res.data);
+  //     console.log("Events response:", res.data);
 
-      setEvents(res.data.data);
-    } catch (err) {
-      console.error(
-        "Failed to fetch events:",
-        err.response?.data || err.message,
-      );
+  //     setEvents(res.data.data);
+  //   } catch (err) {
+  //     console.error(
+  //       "Failed to fetch events:",
+  //       err.response?.data || err.message,
+  //     );
 
-      setEvents([]);
-    }
-  };
+  //     setEvents([]);
+  //   }
+  // };
 
   useEffect(() => {
     const getPhotos = async () => {
       try {
-      const res = await axios.get(
-        "http://localhost:1337/api/photos?populate=image",
-      );
+        const res = await axios.get(
+          "https://photo-features-strapi.onrender.com/api/photos?populate=image",
+        );
 
-      const formattedPhotos = res.data.data.map((photo) => ({
-      id: photo.id,
-      image: photo.image?.url
-        ? `http://localhost:1337${photo.image.url}`
-        : null,
-      title: photo.title || "Untitled Photo",
-      location: "NITK",
-      date: photo.capturedDate || photo.createdAt,
-      photographer: photo.capturedBy?.username || "PClub",
-      link: photo.image?.url
-        ? `http://localhost:1337${photo.image.url}`
-        : "#",
-    }));
-      console.log("FORMATTED PHOTOS:", formattedPhotos);
-      //console.log("Hi");
-      setPhotos(formattedPhotos);
-    } catch (error) {
-      console.error("Failed to fetch photos:", error);
-    }
+        const formattedPhotos = res.data.data.map((photo) => {
+          const imageUrl = photo.image?.url
+            ? photo.image.url.startsWith("http")
+              ? photo.image.url
+              : `https://photo-features-strapi.onrender.com${photo.image.url}`
+            : null;
+
+          return {
+            id: photo.id,
+            image: imageUrl,
+            title: photo.title || "Untitled Photo",
+            location: "NITK",
+            date: photo.capturedDate || photo.createdAt,
+            photographer: photo.capturedBy?.username || "PClub",
+            link: imageUrl || "#",
+          };
+        });
+
+        console.log("FORMATTED PHOTOS:", formattedPhotos);
+        setPhotos(formattedPhotos);
+      } catch (error) {
+        console.error("Failed to fetch photos:", error);
+      }
     };
 
     getPhotos();
   }, []);
 
   useEffect(() => {
-    getEvents();
+    let isMounted = true;
+
+    fetchEvents()
+      .then((eventList) => {
+        if (isMounted) setEvents(eventList);
+      })
+      .catch((error) => {
+        console.error("Failed to fetch events:", error);
+        if (isMounted) setEvents([]);
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return (
@@ -98,7 +117,7 @@ export default function HomePage() {
       <div className="max-w-container px-container-px py-5 mx-auto flex flex-col md:py-7 md:px-container-px-md">
         <About clubGallery={clubGallery} stats={stats} learnMore={learnMore} />
         <Hero photos={photos} />
-        
+
         <hr className="my-10 border-1 border-gray-300" />
         <ClubUpdates events={events} blogs={blogs} />
         <hr className="my-10 border-1 border-gray-300" />

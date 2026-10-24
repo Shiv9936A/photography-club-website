@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -137,7 +136,7 @@ function CreateEvent() {
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
 
         const uploadedMedia = uploadResponse.data?.media;
@@ -171,20 +170,21 @@ function CreateEvent() {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       navigate("/events");
     } catch (error) {
-      console.error(
-        "Create event error:",
-        error.response?.data || error
-      );
+      // console.error(
+      //   "Create event error:",
+      //   error.response?.data || error
+      // );
+      console.log(error);
 
       setMessage(
         error.response?.data?.error?.message ||
           error.message ||
-          "Failed to create event."
+          "Failed to create event.",
       );
     } finally {
       setLoading(false);
@@ -216,8 +216,8 @@ function CreateEvent() {
             Create an Event
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-500 sm:text-base">
-            Bring your event to life. Add the details, upload a cover image,
-            and share the information attendees need.
+            Bring your event to life. Add the details, upload a cover image, and
+            share the information attendees need.
           </p>
         </header>
 
@@ -241,8 +241,6 @@ function CreateEvent() {
                   required
                 />
               </div>
-
-             
 
               <div className="sm:col-span-2">
                 <label className={labelClass}>Description *</label>
@@ -319,8 +317,6 @@ function CreateEvent() {
                 />
                 <p className="mt-2 text-xs text-gray-500">Optional</p>
               </div>
-
-              
             </div>
           </section>
 
@@ -396,8 +392,6 @@ function CreateEvent() {
             </div>
           </section>
 
-          
-
           <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
             <SectionHeading
               icon={<LinkIcon size={21} />}
@@ -406,9 +400,7 @@ function CreateEvent() {
             />
 
             <div className="p-5 sm:p-8">
-              <label className={labelClass}>
-                Portfolio / Instagram URL
-              </label>
+              <label className={labelClass}>Portfolio / Instagram URL</label>
               <input
                 type="url"
                 name="portfolioLink"

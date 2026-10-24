@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || "http://localhost:5000/api";
+const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL;
 const AUTH_TOKEN_KEY = "pclub_auth_token";
 const authEventListeners = new Set();
 

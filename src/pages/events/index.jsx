@@ -1,4 +1,3 @@
-
 import { Outlet, useParams, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft } from "lucide-react";
@@ -43,8 +42,7 @@ const getEventStartDate = (dateTime) => {
 const getCardEvent = (event) => ({
   id: String(event.id),
   title: event.title,
-  description:
-    event.shortDescription || event.fullDescription || "",
+  description: event.shortDescription || event.fullDescription || "",
   location: event.location || event.venue || "Location not specified",
   dateTime: event.dateTime,
   image: event.image || event.bannerImage,
@@ -61,9 +59,7 @@ const filterByTab = (events, activeTab) => {
 
     if (!eventDate) return false;
 
-    return activeTab === "upcoming"
-      ? eventDate >= now
-      : eventDate < now;
+    return activeTab === "upcoming" ? eventDate >= now : eventDate < now;
   });
 };
 
@@ -71,7 +67,7 @@ const filterEvents = (events, selectedCategory, activeTab) => {
   const byCategory = events.filter((event) =>
     selectedCategory === "PClub"
       ? event.eventType === "PClub"
-      : event.eventType !== "PClub"
+      : event.eventType !== "PClub",
   );
 
   return filterByTab(byCategory, activeTab);
@@ -100,8 +96,7 @@ function Events() {
   }
 
   const canCreateEvent =
-    user?.role === "admin" ||
-    user?.role === "sig-coordinator";
+    user?.role === "admin" || user?.role === "sig-coordinator";
 
   useEffect(() => {
     let isMounted = true;
@@ -209,9 +204,7 @@ function Events() {
                 Loading events...
               </p>
             ) : error ? (
-              <p className="py-16 text-center text-red-600">
-                {error}
-              </p>
+              <p className="py-16 text-center text-red-600">{error}</p>
             ) : eventsToShow.length > 0 ? (
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:gap-6">
                 {eventsToShow.map((event) => (
@@ -228,9 +221,7 @@ function Events() {
                 <span className="text-5xl">📷</span>
 
                 <p className="font-playfair text-2xl font-medium text-primary">
-                  No {TAB_LABEL[activeTab]
-                    ? `${TAB_LABEL[activeTab]} `
-                    : ""}
+                  No {TAB_LABEL[activeTab] ? `${TAB_LABEL[activeTab]} ` : ""}
                   {categoryMeta.emptyPrefix} events found.
                 </p>
 
@@ -253,7 +244,8 @@ function Events() {
             </span>
 
             <span className="max-w-2xl text-sm leading-6 text-quaternary sm:text-base">
-              Discover the events and moments we've planned for our photography community.
+              Discover the events and moments we've planned for our photography
+              community.
             </span>
 
             {canCreateEvent && (
@@ -272,9 +264,7 @@ function Events() {
               Loading events...
             </p>
           ) : error ? (
-            <p className="py-16 text-center text-red-600">
-              {error}
-            </p>
+            <p className="py-16 text-center text-red-600">{error}</p>
           ) : (
             <EventCategorySelector onSelect={handleSelectCategory} />
           )}

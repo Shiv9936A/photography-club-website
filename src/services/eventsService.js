@@ -43,16 +43,16 @@ const formatEvent = (item) => {
     dateTime: fields.dateTime ?? "",
     date: validDate
       ? startDate.toLocaleDateString("en-IN", {
-          day: "numeric",
-          month: "short",
-          year: "numeric",
-        })
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })
       : "Date to be announced",
     time: validDate
       ? startDate.toLocaleTimeString("en-IN", {
-          hour: "numeric",
-          minute: "2-digit",
-        })
+        hour: "numeric",
+        minute: "2-digit",
+      })
       : "Time to be announced",
 
     image,
@@ -81,10 +81,10 @@ const requestConfig = () => {
     },
     ...(token
       ? {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
       : {}),
   };
 };
